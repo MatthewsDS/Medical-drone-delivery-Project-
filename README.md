@@ -6,7 +6,7 @@
 <!--     Recommended size: 1200 × 400px                            -->
 <!--     Tools: Canva, Figma, or a screenshot of your CAD model    -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<img src= "https://share.icloud.com/photos/060u09xtv3u0ZehL9WH0uut4w" alt="Project AeroMed Banner" width="100%"/>
+<img src="https://share.icloud.com/photos/060u09xtv3u0ZehL9WH0uut4w" alt="Project AeroMed Banner" width="100%"/>
 
 <br/>
 
