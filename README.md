@@ -25,11 +25,11 @@ The objective of this project is to design, simulate, and construct a physical q
 
 We are a team of five Year 12/13 STEM students treating this project as an industry-grade engineering sprint. Each member owns a critical subsystem:
 
-* **[Teammate 1 Name] (Lead Programmer / CV Specialist):** Focuses on computer vision algorithms, ArduPilot/MAVLink integration, and OpenCV targeting scripts.
-* **[Teammate 2 Name] (Maths & Kinematics Lead):** Owns coordinate frame transformations, 6-DoF flight dynamics modeling, and physics simulations.
-* **[Teammate 3 Name] (Biochem & Payload Engineer):** Responsible for the thermodynamic isolation of the payload bay and monitoring biochemical stability during transit.
-* **[Teammate 4 Name] (Hardware & Aerospace Lead):** Manages CAD chassis design, weight-to-thrust calculations, power distribution, and mechanical assembly.
-* **MatthewsDS (Systems & Repo Administrator):** Oversees architecture integration, Git version control, and end-to-end hardware-in-the-loop (HITL) simulation.
+* **[Jean-Paul] (Lead Programmer / CV Specialist):** Focuses on computer vision algorithms, ArduPilot/MAVLink integration, and OpenCV targeting scripts.
+* **[Malick & Matthews & Jean Paul] (Maths & Kinematics Lead):** Owns coordinate frame transformations, 6-DoF flight dynamics modeling, and physics simulations.
+* **[David & Mustafa] (Biochem & Payload Engineer):** Responsible for the thermodynamic isolation of the payload bay and monitoring biochemical stability during transit.
+* **[Malick & Matthews] (Hardware & Aerospace Lead):** Manages CAD chassis design, weight-to-thrust calculations, power distribution, and mechanical assembly.
+* **[Matthews] (Systems & Repo Administrator):** Oversees architecture integration, Git version control, and end-to-end hardware-in-the-loop (HITL) simulation.
 
 ---
 
@@ -37,17 +37,17 @@ We are a team of five Year 12/13 STEM students treating this project as an indus
 
 Our 7-month development cycle is split into three rigorous phases:
 
-### Phase 1: The Learning & Research Era (Months 1-2)
+### Phase 1: The Learning & Research Era (Months 1-3)
 * Deep dive into university-level kinematics papers and OpenCV documentation.
 * Establish baseline mathematical models for drone rotation and translation matrices.
 * Initial biochemistry research into enzyme/protein degradation under vibration.
 
-### Phase 2: Simulation & CAD (Months 3-4)
+### Phase 2: Simulation & CAD (Months 4-5)
 * Develop and test OpenCV target-tracking scripts using PC webcams.
 * Model the physical drone chassis and payload bay in CAD software (Fusion360/SolidWorks).
 * Run Software-in-the-Loop (SITL) flight simulations to test autonomous mission scripts.
 
-### Phase 3: Hardware Integration & Flight Trials (Months 5-7)
+### Phase 3: Hardware Integration & Flight Trials (Months 6-7)
 * Procurement and physical assembly of the frame, ESCs, motors, and flight controller.
 * Bench-testing the payload container's thermal and vibration dampening capabilities.
 * Real-world autonomous flight testing, telemetry log analysis, and iterative troubleshooting.
