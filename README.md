@@ -6,7 +6,7 @@
 <!--     Recommended size: 1200 × 400px                            -->
 <!--     Tools: Canva, Figma, or a screenshot of your CAD model    -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
-<img src="[https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2001.png](https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2001.jpeg)" alt="Project AeroMed Banner" width="100%"/>
+<img src=https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2001.png](https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2001.jpeg alt="Project AeroMed Banner" width="100%"/>
 
 <br/>
 
