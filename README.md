@@ -262,7 +262,7 @@ python flight_simulations/autonomous_mission.py
 <!--     Recommended size: 200 × 200px                             -->
 <!-- ═══════════════════════════════════════════════════════════════ -->
 
-<img src="YOUR_LOGO_OR_BADGE_URL_HERE" alt="AeroMed Logo" width="120px"/>
+<img src="https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2001.jpeg" alt="AeroMed Logo" width="120px"/>
 
 <br/>
 
