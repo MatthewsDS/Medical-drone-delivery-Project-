@@ -1,10 +1,19 @@
 <div align="center">
 
-<img src="https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2022.jpeg" alt="Project AeroMed" width="65%"/>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  BANNER IMAGE                                                ║
+  ║  Place your banner image in: Media/Photos/                  ║
+  ║  Recommended: 1200 × 400px — a CAD render or team photo     ║
+  ║  Replace the src URL below with your actual image path      ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<img src="https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2022.jpeg"
+     alt="Project AeroMed Banner" width="65%"/>
 
 <br/><br/>
 
-# PROJECT AEROMED
+# 🚁 Project AeroMed
 ### Autonomous Biomedical Delivery Drone
 
 *Bridging computer vision, aerospace engineering, and biomedical science*
@@ -23,13 +32,7 @@
 ![ArduPilot](https://img.shields.io/badge/ArduPilot-FF0000?style=for-the-badge&logo=arduino&logoColor=white)
 ![RaspberryPi](https://img.shields.io/badge/Raspberry%20Pi-A22846?style=for-the-badge&logo=raspberrypi&logoColor=white)
 ![Fusion360](https://img.shields.io/badge/Fusion%20360-F05A28?style=for-the-badge&logo=autodesk&logoColor=white)
-![KiCad](https://img.shields.io/badge/KiCad-314CB0?style=for-the-badge&logo=kicad&logoColor=white)
-
-<br/>
-
-![GitHub last commit](https://img.shields.io/github/last-commit/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=brightgreen)
-![GitHub repo size](https://img.shields.io/github/repo-size/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=blue)
-![GitHub stars](https://img.shields.io/github/stars/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=yellow)
+![KiCad](https://img.shields.io/badge/KiCad-314CB0?style=for-the-badge&logoColor=white)
 
 </div>
 
@@ -38,11 +41,11 @@
 ## 📖 Table of Contents
 
 - [Mission Statement](#-mission-statement)
-- [The Medical Payload](#-the-medical-payload)
-- [Engineering Pillars](#%EF%B8%8F-engineering-pillars)
+- [What We're Delivering](#-what-were-delivering)
+- [Engineering Pillars](#-engineering-pillars)
 - [The Team](#-the-team)
-- [Technology Stack](#%EF%B8%8F-technology-stack)
-- [Project Timeline](#-project-timeline)
+- [Technology Stack](#-technology-stack)
+- [Roadmap](#-roadmap--timeline)
 - [Repository Structure](#-repository-structure)
 - [Getting Started](#-getting-started)
 
@@ -52,31 +55,38 @@
 
 > **"Time is the enemy in a medical emergency. Distance should not be."**
 
-Project AeroMed is an autonomous hexacopter drone system designed to deliver temperature-sensitive, life-critical medical supplies to locations that traditional logistics cannot reach in time.
+Project AeroMed is a full-scope engineering project built by five post-A-Level STEM students. We are designing, simulating, and physically constructing an **autonomous hexacopter** capable of navigating via GPS and computer vision to deliver temperature-sensitive, life-critical medical payloads to locations traditional logistics cannot reach in time.
 
-The drone uses **computer vision** for autonomous navigation and precision landing, **GPS waypoint navigation** for accurate routing, and an **actively regulated payload bay** that automatically adjusts its thermal environment based on the medicine being carried — no manual configuration required.
-
-Built by five STEM students over a 9–12 month timeline, AeroMed bridges computer science, aerospace engineering, mathematics, and biomedical science into a single integrated system.
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  CONCEPT IMAGE — goes here, directly under mission statement ║
+  ║  Suggested: your initial concept sketch, mood board,        ║
+  ║  or first Fusion 360 render                                 ║
+  ║  Recommended size: 900 × 500px                              ║
+  ║  Upload to: Media/Renders/ or Media/Sketches/               ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<div align="center">
+  <img src="YOUR_CONCEPT_SKETCH_OR_RENDER_URL_HERE" alt="AeroMed Concept Sketch or CAD Render" width="70%"/>
+  <br/>
+  <sub><i>Initial concept sketch / early CAD render — replace this URL with your image path</i></sub>
+</div>
 
 ---
 
-## 💊 The Medical Payload
+## 💊 What We're Delivering
 
-The payload bay is engineered to safely transport five critical emergency medications, each with strict and distinct handling requirements. Selecting a medicine from the control interface **automatically reconfigures the payload bay** to the correct thermal profile — implemented as an interrupt-driven state machine on the Raspberry Pi.
+The payload bay is engineered to safely transport critical emergency medications. Each medicine has strict handling requirements — selecting a payload automatically reconfigures the bay's thermal environment to the correct conditions.
 
-<br/>
-
-| Medication | Emergency Use Case | Temperature Requirement | Sensitivity |
-|:---|:---|:---:|:---|
+| Medication | Use Case | Temperature | Key Handling Requirement |
+|:---:|:---|:---:|:---|
 | 💉 **EpiPen / Adrenaline** | Anaphylactic shock | 15–25°C | Impact-sensitive; do not freeze |
 | 🩹 **Naloxone** | Opioid overdose reversal | 15–25°C | Speed of delivery critical |
-| 🐍 **Anti-Venom** | Venomous bites & stings | **2–8°C** ❄️ | Refrigerated; vibration-sensitive |
-| 🩺 **Oxytocin** | Postpartum haemorrhage | **2–8°C** ❄️ | Cold chain essential; light-sensitive |
-| 🩸 **Tranexamic Acid (TXA)** | Trauma bleeding control | 15–25°C | Highly stable; time-critical |
+| 🐍 **Anti-Venom** | Venomous bites & stings | 2–8°C | Refrigerated; vibration-sensitive |
+| 🩺 **Oxytocin** | Postpartum haemorrhage | 2–8°C | Cold chain essential; light-sensitive |
+| 🩸 **Tranexamic Acid (TXA)** | Trauma bleeding control | 15–25°C | Highly stable; time-critical use |
 
-<br/>
-
-> ❄️ Cold chain medicines (Anti-Venom, Oxytocin) require active **Peltier cooling** to maintain 2–8°C throughout the entire flight. Room-temperature medicines require insulation and continuous monitoring only.
+> Cold chain medicines (Anti-Venom, Oxytocin) use active Peltier cooling. Room-temperature medicines use insulation and continuous monitoring. Payload selection triggers an interrupt-driven thermal state machine on the Raspberry Pi.
 
 ---
 
@@ -86,14 +96,18 @@ The payload bay is engineered to safely transport five critical emergency medica
 <tr>
 <td width="50%" valign="top">
 
-### 🚁 Hexacopter Airframe
-Six-motor configuration chosen specifically for **motor redundancy** — a safety requirement for a medical delivery drone. A quadcopter losing one motor crashes; a hexacopter can execute a controlled emergency landing. 550–680mm carbon fibre frame.
+### 📐 6-DoF Kinematics & Mathematics
+Transforming localised camera coordinate frames into global navigation waypoints using rotation matrices, quaternions, and rigid body dynamics.
+
+**Topics:** Euler angles · Quaternions · Newton-Euler equations · NED frames
 
 </td>
 <td width="50%" valign="top">
 
 ### 👁️ Computer Vision
-Real-time target detection using **OpenCV** and **YOLO** for autonomous identification of a landing zone — whether a waving person, marked address, or ArUco landing pad. Precision landing assisted by a **TF-Luna LiDAR** sensor.
+OpenCV and YOLO-based real-time target detection for precision landing zone identification and autonomous target acquisition during flight.
+
+**Tools:** OpenCV · YOLO · ArUco markers · CNNs
 
 </td>
 </tr>
@@ -101,27 +115,17 @@ Real-time target detection using **OpenCV** and **YOLO** for autonomous identifi
 <td width="50%" valign="top">
 
 ### 🧬 Biomedical Payload Engineering
-An insulated, vibration-dampened payload bay with **active Peltier thermal regulation**, real-time DS18B20/BME280 sensor monitoring, and auto-switching thermal profiles. Designed to meet WHO cold chain and IATA biologic packaging standards.
+Designing an insulated, vibration-dampened payload bay that maintains strict thermal conditions (2–8°C cold chain where required) with real-time monitoring throughout transit.
+
+**Topics:** Peltier modules · Thermodynamic isolation · Vibration dampening · KiCad PCB
 
 </td>
 <td width="50%" valign="top">
 
 ### 🔌 Systems Integration
-A **Cube Orange+** flight controller (redundant IMUs, professional-grade GPS) communicates with a **Raspberry Pi 5** via MAVLink. The Pi runs all vision, thermal control, and mission scripting logic simultaneously using Python multi-threading.
+Merging hardware flight controllers (Cube Orange+) with onboard edge computing (Raspberry Pi 5) via MAVLink for real-time autonomous decision making and safe failsafes.
 
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-
-### 📐 6-DoF Kinematics & Mathematics
-Coordinate frame transforms, rotation matrices, and quaternion-based attitude representation translate camera-space detections into real-world navigation commands. Modelled and validated in Jupyter Notebook before deployment.
-
-</td>
-<td width="50%" valign="top">
-
-### 🔋 Dual-Battery Architecture
-Two LiPo 4S 6000mAh batteries — one flies while one charges — doubling testing session efficiency. The custom KiCad PCB (manufactured by JLCPCB) keeps the thermal control circuit lightweight, clean, and professional.
+**Tools:** MAVLink · ArduPilot · DroneKit-Python · SITL
 
 </td>
 </tr>
@@ -131,105 +135,125 @@ Two LiPo 4S 6000mAh batteries — one flies while one charges — doubling testi
 
 ## 👥 The Team
 
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  TEAM PHOTO — goes here, above the team table               ║
+  ║  Even a casual group photo works well                       ║
+  ║  Recommended size: 900 × 400px                              ║
+  ║  Upload to: Media/Photos/                                   ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<div align="center">
+  <img src="YOUR_TEAM_PHOTO_URL_HERE" alt="The AeroMed Team" width="70%"/>
+  <br/>
+  <sub><i>The AeroMed team — replace this URL with your team photo path</i></sub>
+</div>
+
 <br/>
 
-| Member | Role | Domain |
+| Member | Role | Primary Responsibilities |
 |:---|:---|:---|
-| **Matthews** | Project Lead, Systems & Kinematics | Project management, SITL simulation, kinematics modelling, DroneKit mission scripting |
+| **Matthews** | Project Lead & Systems Engineer | Project management, SITL simulation, kinematics modelling, DroneKit mission scripting |
 | **Jean-Paul** | Lead Programmer & CV Specialist | Computer vision (OpenCV, YOLO, CNNs), ArduPilot/MAVLink integration, autonomous targeting |
-| **Malick** | Maths & Hardware Lead | Coordinate frame transforms, 6-DoF dynamics, CAD chassis design (Fusion 360), power distribution |
-| **David** | Biochem & Payload Engineer | Thermodynamic isolation, biochemical stability research, cold chain compliance, PCB design |
+| **Malick** | Maths & Hardware Lead | Coordinate frame transforms, 6-DoF dynamics, Fusion 360 CAD, power distribution |
+| **David** | Biochem & Payload Engineer | Thermodynamic isolation, cold chain compliance, payload bay design, KiCad PCB |
 | **Mustafa** | Biochem & Payload Engineer | Protein/enzyme degradation research, vibration impact analysis, payload bay testing, regulations |
 
 ---
 
 ## 🛠️ Technology Stack
-╔══════════════════════════════════════════════════════════════════╗
+┌─────────────────────────────────────────────────────────────────┐
 
-║                        SOFTWARE LAYER                           ║
+│                       SOFTWARE LAYER                            │
 
-║   Python 3.x  ·  OpenCV  ·  DroneKit  ·  MAVLink  ·  YOLO     ║
+│   Python 3.x  ·  OpenCV  ·  DroneKit  ·  MAVLink  ·  YOLO     │
 
-╠══════════════════════════════════════════════════════════════════╣
+├─────────────────────────────────────────────────────────────────┤
 
-║                      SIMULATION & DESIGN                        ║
+│                     SIMULATION LAYER                            │
 
-║        ArduPilot SITL  ·  Fusion 360 CAD  ·  KiCad PCB        ║
+│          ArduPilot SITL          ·        Fusion 360 CAD        │
 
-╠══════════════════════════════════════════════════════════════════╣
+├─────────────────────────────────────────────────────────────────┤
 
-║                        HARDWARE LAYER                           ║
+│                      HARDWARE LAYER                             │
 
-║  Raspberry Pi 5  ·  Cube Orange+  ·  BLHeli32 ESCs             ║
+│   Raspberry Pi 5  ·  Cube Orange+  ·  6× T-Motor  ·  BLHeli32 │
 
-║  T-Motor Brushless (×6)  ·  Here3 GPS  ·  TF-Luna LiDAR       ║
+│     Here3 GPS  ·  TF-Luna LiDAR  ·  Peltier TEC  ·  Custom PCB │
 
-║  Peltier TEC Modules  ·  DS18B20 / BME280 Sensors              ║
+└─────────────────────────────────────────────────────────────────┘
 
-╚══════════════════════════════════════════════════════════════════╝
-
-**All software tools used are entirely free.** Python, VS Code, ArduPilot, DroneKit, OpenCV, Fusion 360 (personal licence), KiCad, GitHub — zero licensing cost. Hardware is the only expenditure, with a team budget of £1,000+.
+| Tool | Purpose |
+|:---|:---|
+| Python 3.x | All flight logic, computer vision, and thermal control |
+| ArduPilot / ArduCopter | Firmware for low-level flight stabilisation, failsafes, GPS navigation |
+| ArduPilot SITL | Software-in-the-Loop simulator — fly a virtual drone with no hardware |
+| DroneKit-Python | Autonomous mission scripting via MAVLink |
+| OpenCV + YOLO | Real-time object detection, ArUco marker tracking, precision landing |
+| Fusion 360 | CAD for frame, payload bay, mounts — exports STL for 3D printing |
+| KiCad | PCB design for thermal control circuit — exports Gerber for JLCPCB |
+| Raspberry Pi 5 (8GB) | Onboard computer running all Python code |
+| Cube Orange+ | Flight controller with redundant IMUs and reliable GPS |
 
 ---
 
-## 📅 Project Timeline
+## 📅 Roadmap & Timeline
+     Jul 2026           Nov 2026            Mar 2027        Jun 2027
+        │                  │                   │               │
+────────────┼──────────────────┼───────────────────┼───────────────┼────
 
-The project runs across **two phases**, with hardware procurement bridging them.
+│                  │                   │               │
 
-<br/>
-     JULY                    OCT/NOV               MAY/JUNE
-       │                        │                      │
-─────────┼────────────────────────┼──────────────────────┼─────────
+┌─────────────────────────────────────┐           │               │
 
-│                        │                      │
+│   PHASE 1 · Learning & Simulation   │           │               │
 
-████████████████████████████████  │                      │
+│  SITL · OpenCV · CAD · Thermal spec │           │               │
 
-PHASE 1 — LEARNING & SIMULATION   │                      │
+└─────────────────────────────────────┘           │               │
 
-(July → Oct/Nov 2026)             │                      │
+│                   │               │
 
-│                      │
+┌──────────────────────────────────────────────┤
 
-██ HARDWARE PROCUREMENT ██       │
+│     PHASE 2 · Hardware & Build               │
 
-(Oct/Nov 2026)                   │
+│  Assembly · PID tuning · CV integration ·    │
 
-│
+│  Payload testing · Autonomous flight         │
 
-████████████████████████████████
+└──────────────────────────────────────────────┘
 
-PHASE 2 — HARDWARE & FLIGHT
+### 🖥️ Phase 1 — Learning & Simulation *(July – October/November 2026)*
 
-(Dec 2026 → May/Jun 2027)
+The summer window is the highest-productivity period. Learning and building in simulation happen simultaneously — topics the build never requires are skipped.
 
-<br/>
-
-### 🖥️ Phase 1 — Learning & Simulation *(July – Oct/Nov 2026)*
-
-The highest-productivity window. Learning and building happen simultaneously — topics the build never requires are skipped. Summer runs at full pace; university prep slows the final weeks.
-
-- Development environment setup (Python, Git, VS Code, ArduPilot SITL)
-- Foundational topic learning: flight control, kinematics, computer vision, thermodynamics
-- First autonomous SITL mission scripted via DroneKit
+- Environment setup: Python, VS Code, Git, ArduPilot SITL, Fusion 360
+- SITL autonomous mission scripting with DroneKit
 - OpenCV target detection tested on webcam feeds
-- Fusion 360 hexacopter frame and payload bay modelled
-- Breadboard Peltier thermal control circuit built and tested
-- Biochemical storage research completed for all five payload medicines
+- Fusion 360 hexacopter frame and payload bay CAD design
+- Breadboard Peltier thermal circuit with DS18B20 / BME280 sensors
+- Payload biochemistry research and thermal specification per medicine
+- Custom PCB designed in KiCad, ordered from JLCPCB
 
-### 🔧 Phase 2 — Hardware & Flight Testing *(December 2026 – May/June 2027)*
+### 🔧 Phase 2 — Hardware & Build *(December 2026 – June 2027)*
 
-Physical hardware phase — cannot be compressed. Crashes will happen; spare motors and props are budgeted.
+- Hardware procurement (Cube Orange+, T-Motors, ESCs, Pi 5, LiPo batteries, LiDAR, Peltier modules)
+- Frame assembly and Cube Orange+ configuration via Mission Planner
+- Bench testing all electronics and payload bay thermal regulation
+- First flights, PID tuning, autonomous mission testing
+- Computer vision integration and precision landing trials
+- Flight data logs, quantitative results, and full documentation
 
-- Full frame assembly, Cube Orange+ configuration via Mission Planner
-- Bench testing all electronics; payload bay thermal validation
-- First outdoor test flights; PID tuning for stable hover
-- Autonomous GPS mission testing
-- Computer vision + landing integration in real flight
-- Quantitative results logged: delivery accuracy, thermal stability, detection success rates
-
-> **Realistic total timeline:** 9–12 months from July 2026.
-> Best case: 9 months · Most likely: 10–11 months · Worst case: 12–14 months.
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  GANTT CHART IMAGE (optional) — goes here                   ║
+  ║  Export your timeline / Gantt from Notion, Excel, or        ║
+  ║  draw.io as a PNG and drop the link in below                ║
+  ║  Upload to: Media/Diagrams/                                 ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
 
 ---
 
@@ -238,72 +262,90 @@ AeroMed/
 
 │
 
-├── 📂 Phase_1_Learning_and_Simulation/
+├── 📂 01_learning_and_simulation/         # Phase 1 — all simulation and research
 
-│   ├── 📂 biochemistry/              # Thermal & vibration stability research
+│   ├── 📂 biochemistry/                  # Thermal & vibration stability research
 
-│   ├── 📂 maths_and_kinematics/      # 6-DoF modelling, quaternions, transforms
+│   ├── 📂 maths_and_kinematics/          # 6-DoF modelling & matrix derivations
 
-│   ├── 📂 coding_and_cv/             # Python scripts, OpenCV detection, SITL missions
+│   ├── 📂 coding_and_cv/                 # Python scripts & OpenCV experiments
 
-│   ├── 📂 cad_designs/               # Fusion 360 frame & payload bay (.F3D, .STL)
+│   ├── 📂 cad_designs/                   # Fusion 360 files (.F3D, .STL, .STEP)
 
-│   └── 📂 pcb_design/                # KiCad thermal control circuit (Gerbers for JLCPCB)
+│   ├── 📂 pcb_design/                    # KiCad schematics & Gerber exports
+
+│   └── 📂 flight_simulations/            # SITL profiles & autonomous mission scripts
 
 │
 
-└── 📂 Phase_2_Hardware_and_Flight/
+├── 📂 02_hardware_and_build/              # Phase 2 — physical hardware
 
-├── 📂 flight_controller/         # Cube Orange+ params & ArduPilot firmware configs
+│   ├── 📂 flight_controller/             # Cube Orange+ params & firmware configs
 
-├── 📂 vision_integration/        # YOLO + ArUco precision landing scripts
+│   ├── 📂 payload_bay/                   # Thermal test data & Peltier control code
 
-├── 📂 payload_testing/           # Thermal regulation logs & vibration test data
+│   └── 📂 telemetry_logs/               # Real flight data for performance analysis
 
-└── 📂 telemetry_logs/            # Real flight data for performance analysis
+│
+
+└── 📂 Media/                             # All photos, renders, and diagrams
+
+├── 📂 Photos/                        # Team photos, build progress shots
+
+├── 📂 Renders/                       # Fusion 360 CAD renders
+
+├── 📂 Sketches/                      # Concept sketches
+
+└── 📂 Diagrams/                      # System diagrams, Gantt charts
 
 ---
 
 ## 🚀 Getting Started
 
-> ⚠️ *Full setup instructions will be added as the project progresses into Phase 2.*
+> ⚠️ *Full setup instructions will be added as the project advances through Phase 2.*
 
-**Install Python dependencies:**
+**Prerequisites:**
 ```bash
+# Clone the repository
+git clone https://github.com/MatthewsDS/Medical-drone-delivery-Project-.git
+cd Medical-drone-delivery-Project-
+
+# Install Python dependencies
 pip install opencv-python dronekit pymavlink numpy geopy folium
 ```
 
-**Clone the repository:**
+**Running an ArduPilot SITL simulation (Phase 1):**
 ```bash
-git clone https://github.com/MatthewsDS/Medical-drone-delivery-Project-.git
-cd Medical-drone-delivery-Project-
-```
-
-**Run an ArduPilot SITL simulation (Phase 1):**
-```bash
-# Launch the virtual drone environment
+# Launch the SITL virtual drone
 sim_vehicle.py -v ArduCopter --console --map
 
-# Execute an autonomous waypoint mission
-python Phase_1_Learning_and_Simulation/coding_and_cv/autonomous_mission.py
+# Run an autonomous mission script
+python 01_learning_and_simulation/flight_simulations/autonomous_mission.py
 ```
-
-> 📌 All work is version-controlled on GitHub. If it isn't on GitHub, it didn't happen.
 
 ---
 
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  FOOTER / LOGO IMAGE — goes here at the very bottom         ║
+  ║  Your AeroMed logo, school badge, or a clean project icon   ║
+  ║  Recommended: square image, displayed at 100–130px wide     ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
 <div align="center">
 
-<br/>
-
-<img src="https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2023.jpeg" alt="AeroMed" width="110px"/>
+<img src="https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2023.jpeg"
+     alt="AeroMed Logo" width="120px"/>
 
 <br/><br/>
 
-**Project AeroMed** &nbsp;·&nbsp; Five engineers. One mission.
-
+**Project AeroMed** · Post-A-Level STEM Engineering Project
 *Built with purpose. Engineered for impact.*
 
 <br/>
+
+![GitHub last commit](https://img.shields.io/github/last-commit/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=brightgreen)
+![GitHub repo size](https://img.shields.io/github/repo-size/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=blue)
+![GitHub stars](https://img.shields.io/github/stars/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=yellow)
 
 </div>
