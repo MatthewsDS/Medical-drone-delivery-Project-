@@ -48,21 +48,30 @@ def load(target="person"):
 
 
 def annotate(frame, model, want, target, quiet=True):
-    """Draw target box + steering hint onto frame in place. Returns frame."""
+    """Box + name every detected object; steering hint on the nearest target."""
     import cv2
+    font = cv2.FONT_HERSHEY_SIMPLEX
     h, w = frame.shape[:2]
-    boxes = [tuple(map(int, b.xyxy[0])) for b in model(frame, verbose=False)[0].boxes
-             if int(b.cls[0]) in want]
-    box = nearest(boxes)
+    target_boxes = []
+    for b in model(frame, verbose=False)[0].boxes:
+        x1, y1, x2, y2 = map(int, b.xyxy[0])
+        cls = int(b.cls[0])
+        name = model.names[cls]
+        conf = float(b.conf[0])
+        cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+        cv2.putText(frame, f"{name} {conf:.0%}", (x1, max(y1 - 6, 12)), font, 0.5, (0, 255, 0), 2)
+        if cls in want:
+            target_boxes.append((x1, y1, x2, y2))
+
+    box = nearest(target_boxes)
     if box is None:
-        cv2.putText(frame, "no target", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+        cv2.putText(frame, f"no {target}", (10, 30), font, 0.8, (0, 0, 255), 2)
         return frame
     dx, dy, hint = steering_hint(box, w, h)
     x1, y1, x2, y2 = box
-    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    cv2.circle(frame, ((x1 + x2) // 2, (y1 + y2) // 2), 4, (0, 255, 0), -1)
+    cv2.circle(frame, ((x1 + x2) // 2, (y1 + y2) // 2), 4, (0, 0, 255), -1)
     label = f"{target}  {hint}  (dx={dx:+.0f} dy={dy:+.0f})"
-    cv2.putText(frame, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    cv2.putText(frame, label, (10, 30), font, 0.7, (0, 255, 0), 2)
     if not quiet:
         print(label)
     return frame
