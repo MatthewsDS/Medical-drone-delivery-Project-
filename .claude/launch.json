@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cv-preview",
+      "runtimeExecutable": "/Users/matthews/Medical-drone-delivery-Project-/01_learning_and_simulation/coding_and_cv/.venv/bin/python",
+      "runtimeArgs": ["/Users/matthews/Medical-drone-delivery-Project-/01_learning_and_simulation/coding_and_cv/stream.py"],
+      "port": 8000
+    }
+  ]
+}

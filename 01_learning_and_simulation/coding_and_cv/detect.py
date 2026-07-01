@@ -3,9 +3,11 @@
 Webcam -> pretrained YOLO -> nearest target -> steering hint toward center.
 Swap VideoCapture(0) for the Pi camera later; nothing else changes.
 
-Run:      .venv/bin/python detect.py            (default target: person)
-Class:    .venv/bin/python detect.py --target cup
+Run:       .venv/bin/python detect.py            (native window, default target: person)
+Class:     .venv/bin/python detect.py --target cup
 Selfcheck: .venv/bin/python detect.py --selfcheck   (no camera/model needed)
+
+Browser preview: run stream.py instead (imports the helpers below).
 """
 import argparse
 import sys
@@ -35,6 +37,37 @@ def nearest(boxes):
     return max(boxes, key=lambda b: (b[2] - b[0]) * (b[3] - b[1]))
 
 
+def load(target="person"):
+    """Return (model, want_class_ids) for the target class. Exits if class unknown."""
+    from ultralytics import YOLO
+    model = YOLO("yolov8n.pt")
+    want = {i for i, n in model.names.items() if n == target}
+    if not want:
+        sys.exit(f"'{target}' is not a YOLO class. Try: person, cup, bottle, cell phone")
+    return model, want
+
+
+def annotate(frame, model, want, target, quiet=True):
+    """Draw target box + steering hint onto frame in place. Returns frame."""
+    import cv2
+    h, w = frame.shape[:2]
+    boxes = [tuple(map(int, b.xyxy[0])) for b in model(frame, verbose=False)[0].boxes
+             if int(b.cls[0]) in want]
+    box = nearest(boxes)
+    if box is None:
+        cv2.putText(frame, "no target", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+        return frame
+    dx, dy, hint = steering_hint(box, w, h)
+    x1, y1, x2, y2 = box
+    cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    cv2.circle(frame, ((x1 + x2) // 2, (y1 + y2) // 2), 4, (0, 255, 0), -1)
+    label = f"{target}  {hint}  (dx={dx:+.0f} dy={dy:+.0f})"
+    cv2.putText(frame, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    if not quiet:
+        print(label)
+    return frame
+
+
 def selfcheck():
     W, H = 640, 480
     _, _, h = steering_hint((300, 220, 340, 260), W, H)
@@ -50,46 +83,19 @@ def selfcheck():
 
 def main(target="person"):
     import cv2
-    from ultralytics import YOLO
-
-    model = YOLO("yolov8n.pt")
-    names = model.names
-    want = {i for i, n in names.items() if n == target}
-    if not want:
-        sys.exit(f"'{target}' is not a YOLO class. Try: person, cup, bottle, cell phone")
-
+    model, want = load(target)
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         sys.exit("Camera won't open. Grant camera access: System Settings > "
                  "Privacy & Security > Camera > enable your terminal, then rerun.")
-
     while True:
         ok, frame = cap.read()
         if not ok:
             sys.exit("No frame from camera (black feed usually = camera permission denied).")
-        h, w = frame.shape[:2]
-
-        boxes = []
-        for b in model(frame, verbose=False)[0].boxes:
-            if int(b.cls[0]) in want:
-                boxes.append(tuple(map(int, b.xyxy[0])))
-
-        box = nearest(boxes)
-        if box is None:
-            cv2.putText(frame, "no target", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
-        else:
-            dx, dy, hint = steering_hint(box, w, h)
-            x1, y1, x2, y2 = box
-            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.circle(frame, ((x1 + x2) // 2, (y1 + y2) // 2), 4, (0, 255, 0), -1)
-            label = f"{target}  {hint}  (dx={dx:+.0f} dy={dy:+.0f})"
-            cv2.putText(frame, label, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-            print(label)
-
+        annotate(frame, model, want, target, quiet=False)
         cv2.imshow("AeroMed CV - q to quit", frame)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
-
     cap.release()
     cv2.destroyAllWindows()
 
