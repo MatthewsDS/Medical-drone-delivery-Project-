@@ -157,6 +157,12 @@ ENV/
 env.bak/
 venv.bak/
 
+# Claude Code personal permission allowlist (per-machine, not shared)
+.claude/settings.local.json
+
+# YOLO model weights (auto-download, don't commit)
+*.pt
+
 # Spyder project settings
 .spyderproject
 .spyproject
