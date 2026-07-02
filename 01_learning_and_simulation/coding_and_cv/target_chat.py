@@ -195,11 +195,13 @@ JPEG = None  # latest annotated frame as bytes; whole-object swap is atomic unde
 VS = None
 OBJECT_NAMES = set()
 
+# The page polls /frame for independent JPEGs instead of one long MJPEG
+# stream — Safari stalls mid-frame on multipart streams; polling can't freeze.
 PAGE = b"""<!doctype html><meta charset=utf-8><title>AeroMed target chat</title>
 <body style="margin:0;background:#111;color:#eee;font-family:system-ui;text-align:center">
 <p style="margin:8px">AeroMed &mdash; describe the target
 <span style="color:#888">(colours + shirt/trousers/jacket... + objects: car, truck, dog, backpack...)</span></p>
-<img src="/stream" style="max-width:100%">
+<img id=v style="max-width:100%;min-height:200px">
 <form style="margin:10px" onsubmit="send(event)">
 <input id=t size=55 placeholder="individual wearing red shirt and blue trousers, next to a white car"
        style="padding:8px;border-radius:6px;border:0">
@@ -212,7 +214,14 @@ async function post(v){const r=await fetch('/prompt',{method:'POST',body:v});
 document.getElementById('f').textContent='looking for: '+await r.text();}
 function send(e){e.preventDefault();post(document.getElementById('t').value);}
 function reset(){document.getElementById('t').value='';post('');}
-window.onload=async()=>{const r=await fetch('/filter');
+const img=document.getElementById('v');
+async function tick(){
+ try{const r=await fetch('/frame');const b=await r.blob();
+  const u=URL.createObjectURL(b);img.onload=()=>URL.revokeObjectURL(u);img.src=u;
+ }catch(e){}
+ setTimeout(tick,66);
+}
+window.onload=async()=>{tick();const r=await fetch('/filter');
 document.getElementById('f').textContent='looking for: '+await r.text();};
 </script>
 """
@@ -262,27 +271,25 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(msg.encode())
             return
-        if self.path != "/stream":
+        if self.path == "/frame":
+            j = JPEG
+            while j is None:  # camera still warming up
+                time.sleep(0.05)
+                j = JPEG
             self.send_response(200)
-            self.send_header("Content-Type", "text/html")
+            self.send_header("Content-Type", "image/jpeg")
+            self.send_header("Content-Length", str(len(j)))
+            self.send_header("Cache-Control", "no-store")
             self.end_headers()
-            self.wfile.write(PAGE)
+            try:
+                self.wfile.write(j)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
             return
         self.send_response(200)
-        self.send_header("Content-Type", "multipart/x-mixed-replace; boundary=f")
+        self.send_header("Content-Type", "text/html")
         self.end_headers()
-        try:
-            while True:
-                j = JPEG
-                if j is None:
-                    time.sleep(0.05)
-                    continue
-                # per-part Content-Length: Safari stalls without it
-                self.wfile.write(b"--f\r\nContent-Type: image/jpeg\r\n"
-                                 + f"Content-Length: {len(j)}\r\n\r\n".encode() + j + b"\r\n")
-                time.sleep(0.05)  # ~20 fps to the browser
-        except (BrokenPipeError, ConnectionResetError):
-            pass
+        self.wfile.write(PAGE)
 
 
 def main(port):
