@@ -228,10 +228,14 @@ def _producer(pose_model, obj_model):
             continue
         with LOCK:
             spec = SPEC
-        annotate(frame, spec, pose_model, obj_model)
-        ok, buf = cv2.imencode(".jpg", frame)
-        if ok:
-            JPEG = buf.tobytes()
+        try:
+            annotate(frame, spec, pose_model, obj_model)
+            ok, buf = cv2.imencode(".jpg", frame)
+            if ok:
+                JPEG = buf.tobytes()
+        except Exception as e:  # one bad frame must never kill the whole feed
+            print("producer error:", e)
+            time.sleep(0.1)
 
 
 class Handler(BaseHTTPRequestHandler):
