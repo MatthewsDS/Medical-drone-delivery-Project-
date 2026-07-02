@@ -3,15 +3,21 @@
 Type what the target looks like into a browser chat box ("individual wearing
 red shirt and blue trousers", "person next to a white car") and the live feed
 only flags people matching the description. Deliberately NO language model:
-the drone flies offline, so parsing is keyword-based — colour words, clothing
-words, and COCO object names. Colour is judged in HSV on the upper (shirt)
-and lower (trousers) parts of each person box: the "coloured blob" idea.
+the drone flies offline by default, so parsing is keyword-based — colour
+words, clothing words, and COCO object names. Colour is judged in HSV inside
+the shirt/trouser regions of each person, located by pose keypoints when
+visible (correct even sitting at a desk) and by box fractions otherwise.
+A garment that isn't visible (trousers below the frame) never vetoes a match.
+
+One background thread runs detection and publishes an annotated JPEG; any
+number of browser connections just receive copies — inference never runs
+per-client (that's the camera.py lesson applied to a server).
 
 Run:       .venv/bin/python target_chat.py          then open http://localhost:8010
 Selfcheck: .venv/bin/python target_chat.py --selfcheck   (no camera/model needed)
 
-Honest limits: dusk/shadow shifts colours (see lighting.py); the shirt/trouser
-split needs the person reasonably large — at long range match on one colour.
+Honest limits: dusk/shadow shifts colours (see lighting.py); treat colour as
+a filter for choosing between candidates, waving/marker as the confirmation.
 """
 import argparse
 import os
@@ -42,6 +48,9 @@ UPPER = {"shirt", "tshirt", "t-shirt", "top", "jacket", "hoodie", "jumper", "swe
 LOWER = {"trousers", "trouser", "pants", "jeans", "shorts", "skirt", "leggings", "bottoms"}
 MATCH_FRAC = 0.25   # region "is" a colour when this fraction of its pixels fit
 NEAR = 4            # "next to" = object centre within this many person-widths
+# COCO pose keypoints: shoulders, hips, knees
+L_SH, R_SH, L_HP, R_HP, L_KN, R_KN = 5, 6, 11, 12, 13, 14
+KP_CONF = 0.3
 
 
 def parse(text, object_names):
@@ -89,15 +98,32 @@ def color_frac(region, color):
     return hit / (region.shape[0] * region.shape[1])
 
 
-def person_matches(frame, box, spec):
-    """Shirt = upper box (head skipped), trousers = lower box, central 60% width."""
+def person_regions(frame, box, kxy=None, kc=None):
+    """Shirt/trouser pixel regions for one person. Pose keypoints when seen
+    (shirt = shoulders..hips, trousers = hips..knees — right even when only
+    chest-up is in frame); box fractions otherwise. Empty region = garment
+    not visible, and the caller skips judging it."""
     x1, y1, x2, y2 = box
     w, h = x2 - x1, y2 - y1
     cx1, cx2 = x1 + int(0.2 * w), x2 - int(0.2 * w)
-    regions = {"upper": frame[y1 + int(0.15 * h): y1 + int(0.5 * h), cx1:cx2],
-               "lower": frame[y1 + int(0.5 * h): y1 + int(0.95 * h), cx1:cx2]}
+    upper = frame[y1 + int(0.15 * h): y1 + int(0.5 * h), cx1:cx2]
+    lower = frame[y1 + int(0.5 * h): y1 + int(0.95 * h), cx1:cx2]
+    if kxy and kc:
+        sy = [kxy[i][1] for i in (L_SH, R_SH) if kc[i] > KP_CONF]
+        hy = [kxy[i][1] for i in (L_HP, R_HP) if kc[i] > KP_CONF]
+        ky = [kxy[i][1] for i in (L_KN, R_KN) if kc[i] > KP_CONF]
+        if sy:
+            upper = frame[int(min(sy)): int(min(hy)) if hy else y2, cx1:cx2]
+            lower = (frame[int(min(hy)): int(max(ky)) if ky else y2, cx1:cx2]
+                     if hy else frame[0:0, 0:0])
+    return {"upper": upper, "lower": lower}
+
+
+def person_matches(frame, box, spec, kxy=None, kc=None):
+    regions = person_regions(frame, box, kxy, kc)
     for part in ("upper", "lower"):
-        if spec[part] and not any(color_frac(regions[part], c) >= MATCH_FRAC for c in spec[part]):
+        want, reg = spec[part], regions[part]
+        if want and reg.size and not any(color_frac(reg, c) >= MATCH_FRAC for c in want):
             return False
     return True
 
@@ -118,33 +144,40 @@ def objects_ok(frame, objs, wanted, person_box):
     return True
 
 
-def annotate(frame, model, spec):
+def annotate(frame, spec, pose_model, obj_model):
     font = cv2.FONT_HERSHEY_SIMPLEX
     h, w = frame.shape[:2]
-    persons, objs = [], {}
-    for b in model(frame, verbose=False)[0].boxes:
+    r = pose_model(frame, verbose=False)[0]
+    kp = r.keypoints if r.keypoints is not None and r.keypoints.conf is not None else None
+    persons = []
+    for i, b in enumerate(r.boxes):
         box = tuple(map(int, b.xyxy[0]))
-        name = model.names[int(b.cls[0])]
-        if name == "person":
-            persons.append(box)
-        else:
-            objs.setdefault(name, []).append(box)
+        persons.append((box,
+                        kp.xy[i].tolist() if kp is not None else None,
+                        kp.conf[i].tolist() if kp is not None else None))
 
-    for color, name in spec["objects"]:  # show which context objects qualify
-        for ob in objs.get(name, ()):
-            if not color or color_frac(frame[ob[1]:ob[3], ob[0]:ob[2]], color) >= MATCH_FRAC:
-                cv2.rectangle(frame, ob[:2], ob[2:], (255, 160, 0), 2)
-                cv2.putText(frame, f"{color or ''} {name}".strip(),
-                            (ob[0], max(ob[1] - 6, 12)), font, 0.5, (255, 160, 0), 2)
+    objs = {}
+    if spec["objects"]:  # second model runs only when the request needs it
+        for b in obj_model(frame, verbose=False)[0].boxes:
+            name = obj_model.names[int(b.cls[0])]
+            if name != "person":
+                objs.setdefault(name, []).append(tuple(map(int, b.xyxy[0])))
+        for color, name in spec["objects"]:  # show which context objects qualify
+            for ob in objs.get(name, ()):
+                if not color or color_frac(frame[ob[1]:ob[3], ob[0]:ob[2]], color) >= MATCH_FRAC:
+                    cv2.rectangle(frame, ob[:2], ob[2:], (255, 160, 0), 2)
+                    cv2.putText(frame, f"{color or ''} {name}".strip(),
+                                (ob[0], max(ob[1] - 6, 12)), font, 0.5, (255, 160, 0), 2)
 
     target = None  # largest (= nearest) matching person wins
-    for pb in sorted(persons, key=lambda b: (b[2] - b[0]) * (b[3] - b[1]), reverse=True):
-        if person_matches(frame, pb, spec) and objects_ok(frame, objs, spec["objects"], pb):
-            target = pb
+    for box, kxy, kc in sorted(persons, key=lambda p: (p[0][2] - p[0][0]) * (p[0][3] - p[0][1]),
+                               reverse=True):
+        if person_matches(frame, box, spec, kxy, kc) and objects_ok(frame, objs, spec["objects"], box):
+            target = box
             break
-    for pb in persons:
-        if pb != target:
-            cv2.rectangle(frame, pb[:2], pb[2:], (120, 120, 120), 1)
+    for box, _, _ in persons:
+        if box != target:
+            cv2.rectangle(frame, box[:2], box[2:], (120, 120, 120), 1)
     if target:
         _, _, hint = detect.steering_hint(target, w, h)
         cv2.rectangle(frame, target[:2], target[2:], (0, 255, 0), 3)
@@ -158,7 +191,8 @@ def annotate(frame, model, spec):
 
 SPEC = {"upper": [], "lower": [], "objects": []}
 LOCK = threading.Lock()
-MODEL = VS = None
+JPEG = None  # latest annotated frame as bytes; whole-object swap is atomic under the GIL
+VS = None
 OBJECT_NAMES = set()
 
 PAGE = b"""<!doctype html><meta charset=utf-8><title>AeroMed target chat</title>
@@ -172,14 +206,32 @@ PAGE = b"""<!doctype html><meta charset=utf-8><title>AeroMed target chat</title>
 <button style="padding:8px 14px">set target</button>
 <button type=button onclick="reset()" style="padding:8px 14px">clear</button>
 </form>
-<p id=f style="color:#6f6">looking for: none - everyone matches</p>
+<p id=f style="color:#6f6">looking for: ...</p>
 <script>
 async function post(v){const r=await fetch('/prompt',{method:'POST',body:v});
 document.getElementById('f').textContent='looking for: '+await r.text();}
 function send(e){e.preventDefault();post(document.getElementById('t').value);}
 function reset(){document.getElementById('t').value='';post('');}
+window.onload=async()=>{const r=await fetch('/filter');
+document.getElementById('f').textContent='looking for: '+await r.text();};
 </script>
 """
+
+
+def _producer(pose_model, obj_model):
+    """The ONLY thread that runs inference; browsers get copies of its output."""
+    global JPEG
+    while True:
+        frame = VS.read()
+        if frame is None:
+            time.sleep(0.05)
+            continue
+        with LOCK:
+            spec = SPEC
+        annotate(frame, spec, pose_model, obj_model)
+        ok, buf = cv2.imencode(".jpg", frame)
+        if ok:
+            JPEG = buf.tobytes()
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -198,6 +250,14 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(msg.encode())
 
     def do_GET(self):
+        if self.path == "/filter":
+            with LOCK:
+                msg = describe(SPEC)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(msg.encode())
+            return
         if self.path != "/stream":
             self.send_response(200)
             self.send_header("Content-Type", "text/html")
@@ -209,31 +269,32 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         try:
             while True:
-                frame = VS.read()
-                if frame is None:
-                    break
-                with LOCK:
-                    spec = SPEC
-                annotate(frame, MODEL, spec)
-                ok, buf = cv2.imencode(".jpg", frame)
-                if ok:
-                    self.wfile.write(b"--f\r\nContent-Type: image/jpeg\r\n\r\n" + buf.tobytes() + b"\r\n")
+                j = JPEG
+                if j is None:
+                    time.sleep(0.05)
+                    continue
+                # per-part Content-Length: Safari stalls without it
+                self.wfile.write(b"--f\r\nContent-Type: image/jpeg\r\n"
+                                 + f"Content-Length: {len(j)}\r\n\r\n".encode() + j + b"\r\n")
+                time.sleep(0.05)  # ~20 fps to the browser
         except (BrokenPipeError, ConnectionResetError):
             pass
 
 
 def main(port):
-    global MODEL, VS, OBJECT_NAMES
+    global VS, OBJECT_NAMES
     from ultralytics import YOLO
     from camera import VideoStream
-    MODEL = YOLO("yolov8n.pt")
-    OBJECT_NAMES = {n for n in MODEL.names.values() if n != "person" and " " not in n}
+    pose_model = YOLO("yolov8n-pose.pt")
+    obj_model = YOLO("yolov8n.pt")
+    OBJECT_NAMES = {n for n in obj_model.names.values() if n != "person" and " " not in n}
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         sys.exit("Camera won't open. System Settings > Privacy & Security > Camera.")
     VS = VideoStream(cap)
     while VS.read() is None:
         time.sleep(0.05)
+    threading.Thread(target=_producer, args=(pose_model, obj_model), daemon=True).start()
     print(f"AeroMed target chat: http://localhost:{port}")
     ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
 
@@ -253,12 +314,24 @@ def selfcheck():
     assert color_frac(blue, "blue") > 0.9
     assert color_frac(np.full((20, 20, 3), 255, np.uint8), "white") > 0.9
 
+    # full body in frame, no keypoints: box-fraction regions
     person = np.zeros((200, 100, 3), np.uint8)
     person[:100] = (0, 0, 255)   # red shirt
     person[100:] = (255, 0, 0)   # blue trousers
     box = (0, 0, 100, 200)
     assert person_matches(person, box, {"upper": ["red"], "lower": ["blue"], "objects": []})
     assert not person_matches(person, box, {"upper": ["green"], "lower": [], "objects": []})
+
+    # desk view: only chest-up visible — keypoints place the shirt correctly
+    desk = np.zeros((200, 100, 3), np.uint8)
+    desk[:100] = (0, 255, 0)      # head-height clutter the box heuristic would judge
+    desk[100:] = (255, 255, 255)  # the actual white shirt
+    kxy, kc = [[50, 0]] * 17, [0.0] * 17
+    kxy[L_SH], kxy[R_SH] = [20, 100], [80, 100]
+    kc[L_SH] = kc[R_SH] = 0.9     # shoulders seen; hips/knees below the frame
+    spec = {"upper": ["white"], "lower": ["blue"], "objects": []}
+    assert person_matches(desk, box, spec, kxy, kc)  # shirt matches; unseen trousers don't veto
+    assert not person_matches(desk, box, spec)       # box heuristic alone judges the clutter
 
     frame = np.zeros((300, 400, 3), np.uint8)
     frame[0:60, 150:250] = (0, 0, 255)             # a red car-sized blob
@@ -271,7 +344,7 @@ def selfcheck():
 
 
 if __name__ == "__main__":
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))  # reuse local yolov8n.pt
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))  # reuse local model files
     p = argparse.ArgumentParser()
     p.add_argument("port", nargs="?", type=int, default=8010)
     p.add_argument("--selfcheck", action="store_true")
