@@ -28,6 +28,7 @@ run (internet needed once). Press `q` to quit any window.
 | 4 | `altitude.py` | small targets from 10–50 m | `.venv/bin/python altitude.py --sweep` |
 | 5 | `lighting.py` | robustness across light | `--record 10`, then `lighting.py clip.mp4` |
 | 6 | `mission.py` | CV → landing decision handoff | `.venv/bin/python mission.py --live` |
+| 7 | `target_chat.py` | describe the target in words | `.venv/bin/python target_chat.py` → open http://localhost:8010 |
 
 **Every module runs `--selfcheck` with no camera and no model** — that's the
 five-minute health check after any edit: 
@@ -74,6 +75,15 @@ go around). Non-waving people never advance the mission. The CONFIRM state is
 also our false-positive filter: one bad frame can't trigger a landing.
 Flight integration later swaps the printed command for a MAVLink call —
 nothing else changes.
+
+**7. Target chat (`target_chat.py`)** — type "individual wearing red shirt and
+blue trousers, next to a white car" in a browser and only matching people get
+flagged. No language model on purpose — the drone flies offline — so parsing
+is keyword-based (colour words + clothing words + object names YOLO knows).
+Colour is checked in HSV on the upper/lower parts of the person box, and
+"next to X" requires a colour-matched object box near the person. Colour
+shifts with lighting (dusk turns everything blue-grey — see lighting.py), so
+treat colour as a *filter* for choosing between candidates, not as proof.
 
 ## What a laptop cannot validate (honest list)
 
