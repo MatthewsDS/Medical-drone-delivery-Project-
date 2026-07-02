@@ -37,8 +37,9 @@ five-minute health check after any edit:
 
 **1. Waving (`waving.py`)** — YOLO can't see verbs, only nouns. So we get 17
 body keypoints per person from `yolov8n-pose` and define the verb ourselves:
-wrist above shoulder AND swinging side-to-side (≥3 direction changes in 2 s,
-travel measured in shoulder-widths so it works at any distance). Raised-only =
+wrist above shoulder AND swinging side-to-side (≥2 direction changes in 2 s,
+travel measured in shoulder-widths so it works at any distance; brief keypoint
+dropouts from motion blur are tolerated, not reset). Raised-only =
 someone holding a phone; motion-only = someone walking. Both together = a wave.
 
 **2. Threading (`camera.py`)** — the camera produces frames faster than the Pi

@@ -23,7 +23,7 @@ import detect
 
 # COCO keypoint indices we use (of 17): shoulders and wrists
 L_SH, R_SH, L_WR, R_WR = 5, 6, 9, 10
-KP_CONF = 0.5  # keypoint confidence below this = not visible, don't judge it
+KP_CONF = 0.3  # keypoint confidence below this = not visible, don't judge it
 
 
 class WaveDetector:
@@ -34,17 +34,22 @@ class WaveDetector:
     works close-up or from altitude. Pure logic — no camera needed to test.
     """
 
-    def __init__(self, window=2.0, min_swings=3, min_travel=0.4):
+    def __init__(self, window=2.0, min_swings=2, min_travel=0.2, grace=0.4):
         self.window = window          # seconds of wrist history to judge
         self.min_swings = min_swings  # direction reversals required in the window
         self.min_travel = min_travel  # wrist travel required, in shoulder-widths
+        self.grace = grace            # seconds of keypoint dropout tolerated
         self.track = deque()          # (t, x) samples while the wrist is raised
+        self.last_raised = 0.0
 
     def update(self, wrist_x, raised, shoulder_w, t):
-        if not raised or shoulder_w <= 0:
-            self.track.clear()        # arm dropped: a wave must be continuous
+        if raised and shoulder_w > 0:
+            self.last_raised = t
+            self.track.append((t, wrist_x))
+        elif t - self.last_raised > self.grace:
+            self.track.clear()        # arm genuinely dropped, not a one-frame glitch
+        if not self.track:
             return False
-        self.track.append((t, wrist_x))
         while t - self.track[0][0] > self.window:
             self.track.popleft()
         xs = [x for _, x in self.track]
@@ -101,6 +106,10 @@ def selfcheck():
     d = WaveDetector()
     assert not any(d.update(100 * math.sin(2 * math.pi * 1.5 * i / fps), False, sw, i / fps)
                    for i in range(2 * fps))
+    # keypoint flickering off every 5th frame (motion blur) must NOT reset the wave
+    d = WaveDetector()
+    assert any(d.update(100 * math.sin(2 * math.pi * 1.5 * i / fps), i % 5 != 0, sw, i / fps)
+               for i in range(2 * fps)), "brief keypoint dropout should be tolerated"
     print("selfcheck OK")
 
 
@@ -121,10 +130,12 @@ def main():
         r = model(frame, verbose=False)[0]
         box, waving = wave_status(r, wavers, time.time())
         if box:
-            color = (0, 0, 255) if waving else (0, 255, 0)
+            arm_up = any(w.track for w in wavers.values())
+            color = (0, 0, 255) if waving else (0, 200, 255) if arm_up else (0, 255, 0)
+            label = ("WAVING - target confirmed" if waving
+                     else "arm up - keep waving" if arm_up else "person (not waving)")
             cv2.rectangle(frame, box[:2], box[2:], color, 2)
-            cv2.putText(frame, "WAVING - target confirmed" if waving else "person (not waving)",
-                        (10, 30), font, 0.8, color, 2)
+            cv2.putText(frame, label, (10, 30), font, 0.8, color, 2)
         else:
             cv2.putText(frame, "no person", (10, 30), font, 0.8, (0, 0, 255), 2)
         cv2.imshow("AeroMed wave - q to quit", frame)
