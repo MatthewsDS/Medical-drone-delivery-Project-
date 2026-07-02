@@ -163,6 +163,12 @@ venv.bak/
 # YOLO model weights (auto-download, don't commit)
 *.pt
 
+# lighting.py test recordings
+01_learning_and_simulation/coding_and_cv/clip.mp4
+
+# macOS
+.DS_Store
+
 # Spyder project settings
 .spyderproject
 .spyproject
