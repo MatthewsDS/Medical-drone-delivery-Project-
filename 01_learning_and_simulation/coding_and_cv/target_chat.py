@@ -44,8 +44,10 @@ COLORS = {
     "black":  [((0, 0, 0), (179, 255, 65))],
     "grey":   [((0, 0, 66), (179, 45, 169))],
 }
-UPPER = {"shirt", "tshirt", "t-shirt", "top", "jacket", "hoodie", "jumper", "sweater", "coat", "vest"}
-LOWER = {"trousers", "trouser", "pants", "jeans", "shorts", "skirt", "leggings", "bottoms"}
+UPPER = {"shirt", "tshirt", "t-shirt", "top", "upper", "jacket", "hoodie", "jumper", "sweater", "coat", "vest"}
+LOWER = {"trousers", "trouser", "pants", "jeans", "shorts", "skirt", "leggings", "bottoms", "bottom", "lower"}
+# words that mean "any of these YOLO classes"
+ALIASES = {"vehicle": ("car", "truck", "bus"), "bike": ("bicycle", "motorcycle")}
 MATCH_FRAC = 0.25   # region "is" a colour when this fraction of its pixels fit
 NEAR = 4            # "next to" = object centre within this many person-widths
 # COCO pose keypoints: shoulders, hips, knees
@@ -57,6 +59,8 @@ def parse(text, object_names):
     """'red shirt and blue trousers, next to a white car' ->
     {'upper': ['red'], 'lower': ['blue'], 'objects': [('white', 'car')]}
     Colour words attach to the next clothing/object word they precede.
+    Every part is optional: 'white top' ignores bottoms, 'blue bottom'
+    ignores tops, 'next to a yellow vehicle' just needs a person near it.
     ponytail: single-word COCO names only ('car', 'dog'), not 'cell phone'."""
     words = re.findall(r"[a-z-]+", text.lower().replace("gray", "grey"))
     spec = {"upper": [], "lower": [], "objects": []}
@@ -70,7 +74,7 @@ def parse(text, object_names):
         elif w in LOWER:
             spec["lower"] += pending
             pending = []
-        elif w in object_names:
+        elif w in object_names or w in ALIASES:
             spec["objects"] += [(c, w) for c in pending] or [(None, w)]
             pending = []
     if pending and not spec["upper"] and not spec["lower"]:
@@ -131,7 +135,7 @@ def person_matches(frame, box, spec, kxy=None, kc=None):
 def objects_ok(frame, objs, wanted, person_box):
     """Every requested context object must exist, colour-match, and be near the person."""
     for color, name in wanted:
-        for ob in objs.get(name, ()):
+        for ob in [o for cls in ALIASES.get(name, (name,)) for o in objs.get(cls, ())]:
             if color and color_frac(frame[ob[1]:ob[3], ob[0]:ob[2]], color) < MATCH_FRAC:
                 continue
             pw = person_box[2] - person_box[0]
@@ -163,7 +167,7 @@ def annotate(frame, spec, pose_model, obj_model):
             if name != "person":
                 objs.setdefault(name, []).append(tuple(map(int, b.xyxy[0])))
         for color, name in spec["objects"]:  # show which context objects qualify
-            for ob in objs.get(name, ()):
+            for ob in [o for cls in ALIASES.get(name, (name,)) for o in objs.get(cls, ())]:
                 if not color or color_frac(frame[ob[1]:ob[3], ob[0]:ob[2]], color) >= MATCH_FRAC:
                     cv2.rectangle(frame, ob[:2], ob[2:], (255, 160, 0), 2)
                     cv2.putText(frame, f"{color or ''} {name}".strip(),
@@ -200,7 +204,7 @@ OBJECT_NAMES = set()
 PAGE = b"""<!doctype html><meta charset=utf-8><title>AeroMed target chat</title>
 <body style="margin:0;background:#111;color:#eee;font-family:system-ui;text-align:center">
 <p style="margin:8px">AeroMed &mdash; describe the target
-<span style="color:#888">(colours + shirt/trousers/jacket... + objects: car, truck, dog, backpack...)</span></p>
+<span style="color:#888">(any part alone works: "white top" / "blue bottom" / "next to a yellow vehicle")</span></p>
 <img id=v style="max-width:100%;min-height:200px">
 <form style="margin:10px" onsubmit="send(event)">
 <input id=t size=55 placeholder="individual wearing red shirt and blue trousers, next to a white car"
@@ -318,6 +322,11 @@ def selfcheck():
     assert parse("wearing red", {"car"})["upper"] == ["red"]
     assert parse("next to a car", {"car"})["objects"] == [(None, "car")]
     assert parse("", {"car"}) == {"upper": [], "lower": [], "objects": []}
+    # every part is optional, and the words the UI suggests all parse
+    assert parse("white top", {"car"}) == {"upper": ["white"], "lower": [], "objects": []}
+    assert parse("blue bottom", {"car"}) == {"upper": [], "lower": ["blue"], "objects": []}
+    assert parse("black bottoms", {"car"})["lower"] == ["black"]
+    assert parse("next to a yellow vehicle", {"car"})["objects"] == [("yellow", "vehicle")]
 
     red = np.full((20, 20, 3), (0, 0, 255), np.uint8)
     blue = np.full((20, 20, 3), (255, 0, 0), np.uint8)
@@ -332,6 +341,10 @@ def selfcheck():
     box = (0, 0, 100, 200)
     assert person_matches(person, box, {"upper": ["red"], "lower": ["blue"], "objects": []})
     assert not person_matches(person, box, {"upper": ["green"], "lower": [], "objects": []})
+    # partial specs judge only the part given
+    assert person_matches(person, box, {"upper": ["red"], "lower": [], "objects": []})
+    assert person_matches(person, box, {"upper": [], "lower": ["blue"], "objects": []})
+    assert not person_matches(person, box, {"upper": [], "lower": ["green"], "objects": []})
 
     # desk view: only chest-up visible — keypoints place the shirt correctly
     desk = np.zeros((200, 100, 3), np.uint8)
@@ -351,6 +364,8 @@ def selfcheck():
     assert not objects_ok(frame, objs, [("blue", "car")], (100, 100, 140, 200))  # wrong colour
     assert not objects_ok(frame, objs, [("red", "car")], (0, 250, 20, 290))      # too far
     assert not objects_ok(frame, {}, [("red", "car")], (100, 100, 140, 200))     # no car at all
+    # "vehicle" finds trucks/buses too
+    assert objects_ok(frame, {"truck": objs["car"]}, [("red", "vehicle")], (100, 100, 140, 200))
     print("selfcheck OK")
 
 
