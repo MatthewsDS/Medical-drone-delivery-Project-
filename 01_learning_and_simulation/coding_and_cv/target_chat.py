@@ -198,6 +198,36 @@ LOCK = threading.Lock()
 JPEG = None  # latest annotated frame as bytes; whole-object swap is atomic under the GIL
 VS = None
 OBJECT_NAMES = set()
+# open-vocabulary "AI search" (YOLO-World): type any phrase, ~4 fps on the Mac.
+# Too slow for the Pi in flight — demo / ground-station mode; keywords fly.
+MODE = "kw"            # "kw" (keyword+colour, flight-ready) or "world"
+WORLD = None           # lazy-loaded YOLOWorld model
+WORLD_LABEL = ""
+WLOCK = threading.Lock()
+
+
+def _phrases(text):
+    """'white shirt, next to a yellow vehicle' -> ['white shirt', 'a yellow vehicle']"""
+    return [p.strip() for p in re.split(r",|\band\b|\bnext to\b", text.lower()) if p.strip()]
+
+
+def annotate_world(frame, result, label):
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    h, w = frame.shape[:2]
+    boxes = []
+    for b in result.boxes:
+        box = tuple(map(int, b.xyxy[0]))
+        boxes.append(box)
+        cv2.rectangle(frame, box[:2], box[2:], (0, 255, 0), 1)
+        cv2.putText(frame, f"{result.names[int(b.cls[0])]} {float(b.conf[0]):.0%}",
+                    (box[0], max(box[1] - 6, 12)), font, 0.5, (0, 255, 0), 2)
+    target = detect.nearest(boxes)
+    if target:
+        _, _, hint = detect.steering_hint(target, w, h)
+        cv2.rectangle(frame, target[:2], target[2:], (0, 255, 0), 3)
+        cv2.putText(frame, f"TARGET {hint}", (target[0], max(target[1] - 8, 20)), font, 0.7, (0, 255, 0), 2)
+    miss = "" if target else "  |  NO MATCH"
+    cv2.putText(frame, f"AI search: {label}{miss}", (10, 25), font, 0.6, (0, 255, 255), 2)
 
 # The page polls /frame for independent JPEGs instead of one long MJPEG
 # stream — Safari stalls mid-frame on multipart streams; polling can't freeze.
@@ -210,13 +240,16 @@ PAGE = b"""<!doctype html><meta charset=utf-8><title>AeroMed target chat</title>
 <input id=t size=55 placeholder="individual wearing red shirt and blue trousers, next to a white car"
        style="padding:8px;border-radius:6px;border:0">
 <button style="padding:8px 14px">set target</button>
+<button type=button onclick="ai()" style="padding:8px 14px">AI search (beta)</button>
 <button type=button onclick="reset()" style="padding:8px 14px">clear</button>
 </form>
 <p id=f style="color:#6f6">looking for: ...</p>
 <script>
-async function post(v){const r=await fetch('/prompt',{method:'POST',body:v});
+async function post(v,path){const r=await fetch(path||'/prompt',{method:'POST',body:v});
 document.getElementById('f').textContent='looking for: '+await r.text();}
 function send(e){e.preventDefault();post(document.getElementById('t').value);}
+function ai(){document.getElementById('f').textContent='loading AI model (first time ~20s)...';
+post(document.getElementById('t').value,'/world');}
 function reset(){document.getElementById('t').value='';post('');}
 const img=document.getElementById('v');
 async function tick(){
@@ -242,7 +275,12 @@ def _producer(pose_model, obj_model):
         with LOCK:
             spec = SPEC
         try:
-            annotate(frame, spec, pose_model, obj_model)
+            if MODE == "world" and WORLD is not None:
+                with WLOCK:
+                    r = WORLD(frame, conf=0.2, verbose=False)[0]
+                annotate_world(frame, r, WORLD_LABEL)
+            else:
+                annotate(frame, spec, pose_model, obj_model)
             ok, buf = cv2.imencode(".jpg", frame)
             if ok:
                 JPEG = buf.tobytes()
@@ -256,11 +294,23 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
-        global SPEC
+        global SPEC, MODE, WORLD, WORLD_LABEL
         text = self.rfile.read(int(self.headers.get("Content-Length") or 0)).decode()
-        with LOCK:
-            SPEC = parse(text, OBJECT_NAMES)
-            msg = describe(SPEC)
+        if self.path == "/world" and _phrases(text):
+            phrases = _phrases(text)
+            with WLOCK:
+                if WORLD is None:
+                    from ultralytics import YOLOWorld  # first call: loads/downloads model
+                    WORLD = YOLOWorld("yolov8s-worldv2.pt")
+                WORLD.set_classes(phrases)
+            WORLD_LABEL = ", ".join(phrases)
+            MODE = "world"
+            msg = f"AI search: {WORLD_LABEL}"
+        else:
+            with LOCK:
+                SPEC = parse(text, OBJECT_NAMES)
+                msg = describe(SPEC)
+            MODE = "kw"
         self.send_response(200)
         self.send_header("Content-Type", "text/plain")
         self.end_headers()
@@ -269,7 +319,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/filter":
             with LOCK:
-                msg = describe(SPEC)
+                msg = f"AI search: {WORLD_LABEL}" if MODE == "world" else describe(SPEC)
             self.send_response(200)
             self.send_header("Content-Type", "text/plain")
             self.end_headers()
@@ -366,6 +416,10 @@ def selfcheck():
     assert not objects_ok(frame, {}, [("red", "car")], (100, 100, 140, 200))     # no car at all
     # "vehicle" finds trucks/buses too
     assert objects_ok(frame, {"truck": objs["car"]}, [("red", "vehicle")], (100, 100, 140, 200))
+
+    assert _phrases("white shirt, next to a yellow vehicle") == ["white shirt", "a yellow vehicle"]
+    assert _phrases("red jacket and a dog") == ["red jacket", "a dog"]
+    assert _phrases("") == []
     print("selfcheck OK")
 
 

@@ -8,11 +8,12 @@ Designs: [Phase 1](../../docs/superpowers/specs/2026-07-01-aeromed-cv-webcam-des
 ## Setup (once)
 ```bash
 python3 -m venv .venv
-.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pip install -r requirements.txt
 ```
-No new dependencies since Phase 1 — pose models come with ultralytics, ArUco
-with OpenCV. Models (`yolov8n.pt`, `yolov8n-pose.pt`) auto-download on first
-run (internet needed once). Press `q` to quit any window.
+(`python -m pip`, not `.venv/bin/pip` — the bare pip script breaks if the
+repo folder is ever moved.) Models (`yolov8n.pt`, `yolov8n-pose.pt`,
+`yolov8s-worldv2.pt`) auto-download on first use — internet needed once.
+Press `q` to quit any window.
 
 **First run:** macOS asks for camera access → Allow (System Settings > Privacy
 & Security > Camera > your terminal). Black feed = permission denied.
@@ -84,6 +85,10 @@ Colour is checked in HSV on the upper/lower parts of the person box, and
 "next to X" requires a colour-matched object box near the person. Colour
 shifts with lighting (dusk turns everything blue-grey — see lighting.py), so
 treat colour as a *filter* for choosing between candidates, not as proof.
+The **AI search (beta)** button sends the same text to YOLO-World instead —
+open-vocabulary detection that accepts any phrase ("person carrying a
+ladder"). ~4 fps on the Mac, too slow on the Pi for live flight: keyword
+mode is the flight system, AI search is the ground-station/demo mode.
 
 ## What a laptop cannot validate (honest list)
 
