@@ -68,12 +68,21 @@ class WaveDetector:
         return swings >= self.min_swings
 
 
+def person_wave(kxy, kc, wavers, t):
+    """One frame's wave verdict for ONE person's keypoints (17x[x,y] + confs).
+    wavers = {"L": WaveDetector, "R": WaveDetector} kept across frames."""
+    shoulder_w = abs(kxy[L_SH][0] - kxy[R_SH][0])  # scale reference at any distance
+    waving = False
+    for side, wr, sh in (("L", L_WR, L_SH), ("R", R_WR, R_SH)):
+        seen = kc[wr] > KP_CONF and kc[sh] > KP_CONF
+        raised = seen and kxy[wr][1] < kxy[sh][1]  # image y grows downward
+        waving |= wavers[side].update(kxy[wr][0], raised, shoulder_w, t)
+    return waving
+
+
 def wave_status(result, wavers, t):
     """One frame's verdict for the nearest person in a yolov8-pose result.
-
-    wavers = {"L": WaveDetector, "R": WaveDetector} kept across frames.
-    Returns (box, waving): box of the nearest person or None.
-    """
+    Returns (box, waving): box of the nearest person or None."""
     boxes = [tuple(map(int, b)) for b in result.boxes.xyxy.tolist()]
     box = detect.nearest(boxes)
     if box is None or result.keypoints is None or result.keypoints.conf is None:
@@ -81,15 +90,8 @@ def wave_status(result, wavers, t):
             d.update(0, False, 0, t)
         return None, False
     i = boxes.index(box)
-    kxy = result.keypoints.xy[i].tolist()
-    kc = result.keypoints.conf[i].tolist()
-    shoulder_w = abs(kxy[L_SH][0] - kxy[R_SH][0])  # scale reference at any distance
-    waving = False
-    for side, wr, sh in (("L", L_WR, L_SH), ("R", R_WR, R_SH)):
-        seen = kc[wr] > KP_CONF and kc[sh] > KP_CONF
-        raised = seen and kxy[wr][1] < kxy[sh][1]  # image y grows downward
-        waving |= wavers[side].update(kxy[wr][0], raised, shoulder_w, t)
-    return box, waving
+    return box, person_wave(result.keypoints.xy[i].tolist(),
+                            result.keypoints.conf[i].tolist(), wavers, t)
 
 
 def selfcheck():
@@ -110,6 +112,17 @@ def selfcheck():
     d = WaveDetector()
     assert any(d.update(100 * math.sin(2 * math.pi * 1.5 * i / fps), i % 5 != 0, sw, i / fps)
                for i in range(2 * fps)), "brief keypoint dropout should be tolerated"
+    # person_wave: right wrist raised + swinging on synthetic keypoints => wave
+    wavers = {"L": WaveDetector(), "R": WaveDetector()}
+    kc = [0.0] * 17
+    kc[L_SH] = kc[R_SH] = kc[R_WR] = 0.9
+    hit = False
+    for i in range(2 * fps):
+        kxy = [[0, 0]] * 17
+        kxy[L_SH], kxy[R_SH] = [100, 200], [220, 200]
+        kxy[R_WR] = [160 + 100 * math.sin(2 * math.pi * 1.5 * i / fps), 120]
+        hit |= person_wave(kxy, kc, wavers, i / fps)
+    assert hit, "person_wave should fire on a raised swinging wrist"
     print("selfcheck OK")
 
 

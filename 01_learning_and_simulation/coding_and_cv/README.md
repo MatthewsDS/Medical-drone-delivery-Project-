@@ -84,10 +84,13 @@ also our false-positive filter: one bad frame can't trigger a landing.
 Flight integration later swaps the printed command for a MAVLink call —
 nothing else changes.
 
-**7. Target chat (`target_chat.py`)** — type "individual wearing red shirt and
-blue trousers, next to a white car" in a browser and only matching people get
-flagged. No language model on purpose — the drone flies offline — so parsing
-is keyword-based (colour words + clothing words + object names YOLO knows).
+**7. Target chat (`target_chat.py`)** — full-screen camera + collapsible
+details sidebar (☰). Type any combination of details — "red top", "black
+bottom", "waving", "lying", "next to a red car" — each is optional and only
+what you type is checked. `waving` reuses waving.py's detector on the best
+candidate (amber box = matches the description, wave not yet confirmed;
+green = confirmed target). No language model on purpose — the drone flies
+offline — so parsing is keyword-based (colour + clothing + posture + object words).
 Colour is checked in HSV on the upper/lower parts of the person box, and
 "next to X" requires a colour-matched object box near the person. Colour
 shifts with lighting (dusk turns everything blue-grey — see lighting.py), so
