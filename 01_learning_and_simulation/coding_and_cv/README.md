@@ -100,6 +100,15 @@ open-vocabulary detection that accepts any phrase ("person carrying a
 ladder"). ~4 fps on the Mac, too slow on the Pi for live flight: keyword
 mode is the flight system, AI search is the ground-station/demo mode.
 
+The **Assess scene (AI)** button sends the current frame to the Claude API
+(vision) and gets back a structured judgement plain YOLO can't make —
+each person's *condition* (standing / lying down / possibly injured /
+waving), landing *hazards* (wires, vehicles, water, crowds), and a
+proceed / caution / abort recommendation. Needs internet + an API key
+(`export ANTHROPIC_API_KEY=sk-ant-...` before launching; key from
+console.anthropic.com). One call takes a few seconds and costs ~a penny —
+a ground-station decision aid, not a flight-rate loop.
+
 ## What a laptop cannot validate (honest list)
 
 - **Real fps on the Pi 5** — the Mac is ~10× faster; all thresholds that

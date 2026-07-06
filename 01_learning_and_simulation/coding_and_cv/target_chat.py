@@ -25,6 +25,8 @@ between candidates, waving/marker confirms. Wave progress follows the current
 best candidate; two similar candidates alternating can reset it (foundation).
 """
 import argparse
+import base64
+import json
 import os
 import re
 import sys
@@ -244,6 +246,88 @@ def _phrases(text):
     return [p.strip() for p in re.split(r",|\band\b|\bnext to\b", text.lower()) if p.strip()]
 
 
+# --- scene assessment via the Claude API (condition/hazards — beyond YOLO) ---
+# Needs an internet connection + ANTHROPIC_API_KEY: ground-station feature,
+# not a flight-control loop (one call takes seconds, costs ~a penny).
+ASSESS_MODEL = "claude-opus-4-8"  # best judgment; "claude-haiku-4-5" is ~5x cheaper if cost bites
+
+ASSESS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "people_count": {"type": "integer"},
+        "people": {"type": "array", "items": {
+            "type": "object",
+            "properties": {
+                "condition": {"type": "string", "enum": [
+                    "standing", "sitting", "lying_down", "moving", "waving",
+                    "possibly_injured", "unknown"]},
+                "description": {"type": "string"},
+            },
+            "required": ["condition", "description"],
+            "additionalProperties": False,
+        }},
+        "hazards": {"type": "array", "items": {"type": "string"}},
+        "scene_summary": {"type": "string"},
+        "recommendation": {"type": "string", "enum": ["proceed", "caution", "abort"]},
+        "confidence": {"type": "string", "enum": ["low", "medium", "high"]},
+    },
+    "required": ["people_count", "people", "hazards", "scene_summary",
+                 "recommendation", "confidence"],
+    "additionalProperties": False,
+}
+
+ASSESS_PROMPT = (
+    "You are the scene-assessment module of a medical-delivery drone preparing "
+    "to land. Assess this camera frame: count the people and judge each one's "
+    "apparent condition, list anything hazardous for a small drone landing "
+    "nearby (wires, vehicles, water, crowds, animals), summarise the scene, "
+    "and recommend proceed/caution/abort for the delivery approach."
+)
+
+
+def _fmt_assessment(d):
+    """Structured assessment dict -> readable sidebar text."""
+    lines = [f"PEOPLE: {d['people_count']}"]
+    lines += [f"  - {p['condition'].replace('_', ' ')}: {p['description']}" for p in d["people"]]
+    if d["hazards"]:
+        lines.append("HAZARDS: " + "; ".join(d["hazards"]))
+    lines.append(f"SCENE: {d['scene_summary']}")
+    lines.append(f"RECOMMEND: {d['recommendation'].upper()}  (confidence: {d['confidence']})")
+    return "\n".join(lines)
+
+
+def assess_frame(jpeg_bytes):
+    """One Claude API vision call on the current frame -> assessment text."""
+    import anthropic
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return ("No API key set. Get one at console.anthropic.com > API keys,\n"
+                "then start with:  export ANTHROPIC_API_KEY=sk-ant-...  first.")
+    try:
+        r = anthropic.Anthropic().messages.create(
+            model=ASSESS_MODEL,
+            max_tokens=1500,
+            output_config={"format": {"type": "json_schema", "schema": ASSESS_SCHEMA}},
+            messages=[{"role": "user", "content": [
+                {"type": "image", "source": {
+                    "type": "base64", "media_type": "image/jpeg",
+                    "data": base64.standard_b64encode(jpeg_bytes).decode()}},
+                {"type": "text", "text": ASSESS_PROMPT},
+            ]}],
+        )
+        if r.stop_reason == "refusal":
+            return "Assessment declined by the model."
+        return _fmt_assessment(json.loads(
+            next(b.text for b in r.content if b.type == "text")))
+    except anthropic.AuthenticationError:
+        return "Invalid ANTHROPIC_API_KEY."
+    except anthropic.RateLimitError:
+        return "Rate limited - wait a moment and try again."
+    except anthropic.APIStatusError as e:
+        return f"Claude API error: {e.message}"
+    except anthropic.APIConnectionError:
+        return "No internet connection to the Claude API."
+
+
 def annotate_world(frame, result, label):
     font = cv2.FONT_HERSHEY_SIMPLEX
     h, w = frame.shape[:2]
@@ -340,6 +424,11 @@ main{flex:1;display:flex;align-items:center;justify-content:center;background:#0
 </form>
 <div id=chips></div>
 <p id=f>looking for: ...</p>
+<button class=btn id=asb type=button onclick="assess()"
+        style="background:none;border:1px solid var(--bd);color:var(--fg);width:100%;padding:11px 0">
+Assess scene (AI)</button>
+<pre id=as style="white-space:pre-wrap;font-size:12px;color:var(--mut);margin:8px 0 0;
+     font-family:ui-monospace,monospace;line-height:1.5"></pre>
 <details><summary>Vocabulary</summary>
 <p><b>colours</b> red orange yellow green blue purple white black grey<br>
 <b>top</b> top / shirt / jacket / hoodie...<br>
@@ -361,6 +450,10 @@ function send(e){e.preventDefault();post(document.getElementById('t').value);}
 function ai(){document.getElementById('f').textContent='loading AI model (first time ~20s)...';
  post(document.getElementById('t').value,'/world');}
 function reset(){document.getElementById('t').value='';post('');}
+async function assess(){const el=document.getElementById('as');
+ el.textContent='asking Claude to assess the scene...';
+ try{const r=await fetch('/assess',{method:'POST',body:''});el.textContent=await r.text();}
+ catch(e){el.textContent='request failed';}}
 async function scan(on){await fetch('/scan',{method:'POST',body:on?'on':'off'});
  const s=document.getElementById('scs');s.textContent=on?'ACTIVE':'STANDBY';
  s.style.color=on?'var(--acc)':'var(--warn)';}
@@ -415,6 +508,18 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         global SPEC, MODE, WORLD, WORLD_LABEL, WAVERS, SCANNING
         text = self.rfile.read(int(self.headers.get("Content-Length") or 0)).decode()
+        if self.path == "/assess":
+            frame = VS.read() if VS is not None else None
+            if frame is None:
+                msg = "no camera frame yet"
+            else:
+                ok, buf = cv2.imencode(".jpg", frame)
+                msg = assess_frame(buf.tobytes()) if ok else "could not encode frame"
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(msg.encode())
+            return
         if self.path == "/scan":
             SCANNING = text == "on"
             self.send_response(200)
@@ -563,6 +668,15 @@ def selfcheck():
     assert _phrases("white shirt, next to a yellow vehicle") == ["white shirt", "a yellow vehicle"]
     assert _phrases("red jacket and a dog") == ["red jacket", "a dog"]
     assert _phrases("") == []
+
+    # scene-assessment formatter: structured dict -> readable text (no API/camera)
+    a = {"people_count": 1,
+         "people": [{"condition": "waving", "description": "adult in a red jacket"}],
+         "hazards": ["overhead power lines"], "scene_summary": "suburban driveway",
+         "recommendation": "caution", "confidence": "high"}
+    txt = _fmt_assessment(a)
+    assert "PEOPLE: 1" in txt and "waving" in txt and "power lines" in txt
+    assert "RECOMMEND: CAUTION" in txt, txt
     print("selfcheck OK")
 
 
