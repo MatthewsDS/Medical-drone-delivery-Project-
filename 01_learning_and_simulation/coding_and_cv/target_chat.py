@@ -233,6 +233,7 @@ JPEG = None  # latest annotated frame as bytes; whole-object swap is atomic unde
 VS = None
 OBJECT_NAMES = set()
 MODE = "kw"            # "kw" (keyword+colour, flight-ready) or "world" (AI search)
+SCANNING = True        # off = standby (transit): no inference at all, no matching
 WORLD = None           # lazy-loaded YOLOWorld model
 WORLD_LABEL = ""
 WLOCK = threading.Lock()
@@ -303,6 +304,18 @@ details{border:1px solid var(--bd);border-radius:10px;padding:10px 12px;font-siz
 summary{cursor:pointer;color:var(--fg);font-weight:600;font-size:13px}
 details p{margin:8px 0 0;line-height:1.6}
 details b{color:var(--fg);font-weight:600}
+.tgl{display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px 12px;
+     border:1px solid var(--bd);border-radius:10px;background:var(--bg)}
+.tgl input{position:absolute;opacity:0;width:0}
+.knob{width:40px;height:22px;min-width:40px;border-radius:999px;background:var(--s2);
+      border:1px solid var(--bd);position:relative;transition:background .2s}
+.knob::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;
+      border-radius:50%;background:var(--mut);transition:transform .2s,background .2s}
+.tgl input:checked+.knob{background:var(--acc)}
+.tgl input:checked+.knob::after{transform:translateX(18px);background:var(--accd)}
+.tgl input:focus-visible+.knob{outline:2px solid var(--acc);outline-offset:2px}
+#scl{font-weight:600;font-size:14px}
+#scs{margin-left:auto;font-size:12px;font-family:ui-monospace,monospace;color:var(--mut)}
 main{flex:1;display:flex;align-items:center;justify-content:center;background:#000;min-width:0}
 #v{max-width:100%;max-height:100dvh;min-height:200px}
 @media (max-width:700px){#sb{position:fixed;inset:0 auto 0 0;z-index:40;box-shadow:8px 0 24px #000c}}
@@ -315,6 +328,8 @@ main{flex:1;display:flex;align-items:center;justify-content:center;background:#0
 <aside id=sb>
 <h1>AEROMED <span>VISION</span></h1>
 <p class=sub>Describe the target. Any detail alone works.</p>
+<label class=tgl><input type=checkbox id=sc checked onchange="scan(this.checked)">
+<span class=knob aria-hidden=true></span><span id=scl>Scanning</span><span id=scs>ACTIVE</span></label>
 <form onsubmit="send(event)">
 <input id=t placeholder="red top, black bottom, waving, next to a red car" autocomplete=off>
 <div class=row style="margin-top:10px">
@@ -346,13 +361,21 @@ function send(e){e.preventDefault();post(document.getElementById('t').value);}
 function ai(){document.getElementById('f').textContent='loading AI model (first time ~20s)...';
  post(document.getElementById('t').value,'/world');}
 function reset(){document.getElementById('t').value='';post('');}
+async function scan(on){await fetch('/scan',{method:'POST',body:on?'on':'off'});
+ const s=document.getElementById('scs');s.textContent=on?'ACTIVE':'STANDBY';
+ s.style.color=on?'var(--acc)':'var(--warn)';}
 const img=document.getElementById('v');
 async function tick(){
  try{const r=await fetch('/frame');const b=await r.blob();
   const u=URL.createObjectURL(b);img.onload=()=>URL.revokeObjectURL(u);img.src=u;
  }catch(e){}
  setTimeout(tick,66);}
-window.onload=async()=>{tick();const r=await fetch('/filter');setF(await r.text());};
+window.onload=async()=>{tick();
+ const r=await fetch('/filter');setF(await r.text());
+ const on=(await (await fetch('/scan')).text())=='on';
+ document.getElementById('sc').checked=on;
+ const s=document.getElementById('scs');s.textContent=on?'ACTIVE':'STANDBY';
+ s.style.color=on?'var(--acc)':'var(--warn)';};
 </script>
 """
 
@@ -368,7 +391,10 @@ def _producer(pose_model, obj_model):
         with LOCK:
             spec = SPEC
         try:
-            if MODE == "world" and WORLD is not None:
+            if not SCANNING:  # transit/standby: camera only, zero inference (saves Pi battery too)
+                cv2.putText(frame, "STANDBY - scanning off", (10, 25),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (148, 163, 184), 2)
+            elif MODE == "world" and WORLD is not None:
                 with WLOCK:
                     r = WORLD(frame, conf=0.2, verbose=False)[0]
                 annotate_world(frame, r, WORLD_LABEL)
@@ -387,8 +413,15 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def do_POST(self):
-        global SPEC, MODE, WORLD, WORLD_LABEL, WAVERS
+        global SPEC, MODE, WORLD, WORLD_LABEL, WAVERS, SCANNING
         text = self.rfile.read(int(self.headers.get("Content-Length") or 0)).decode()
+        if self.path == "/scan":
+            SCANNING = text == "on"
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(text.encode())
+            return
         if self.path == "/world" and _phrases(text):
             phrases = _phrases(text)
             with WLOCK:
@@ -411,6 +444,12 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(msg.encode())
 
     def do_GET(self):
+        if self.path == "/scan":
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"on" if SCANNING else b"off")
+            return
         if self.path == "/filter":
             with LOCK:
                 msg = f"AI search: {WORLD_LABEL}" if MODE == "world" else describe(SPEC)
