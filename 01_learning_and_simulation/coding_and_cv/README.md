@@ -18,6 +18,13 @@ Press `q` to quit any window.
 **First run:** macOS asks for camera access → Allow (System Settings > Privacy
 & Security > Camera > your terminal). Black feed = permission denied.
 
+## No-terminal launcher
+
+Double-click **`start_aeromed.command`** in Finder (this folder) — it opens
+http://localhost:8080 with a button for every demo below. One demo runs at a
+time (they share the webcam); errors and text output appear on the page.
+(First time macOS may block it: right-click → Open. Or run `.venv/bin/python hub.py`.)
+
 ## The modules — in teaching order
 
 | # | File | Gap it closes | Try it |
