@@ -166,6 +166,9 @@ venv.bak/
 # lighting.py test recordings
 01_learning_and_simulation/coding_and_cv/clip.mp4
 
+# hub.py runtime scratch output
+01_learning_and_simulation/coding_and_cv/.hub_last_output.txt
+
 # macOS
 .DS_Store
 
