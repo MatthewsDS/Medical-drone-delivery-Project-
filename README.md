@@ -1,29 +1,18 @@
 <div align="center">
 
-<!--
-  ╔══════════════════════════════════════════════════════════════╗
-  ║  BANNER IMAGE                                                ║
-  ║  Place your banner image in: Media/Photos/                  ║
-  ║  Recommended: 1200 × 400px — a CAD render or team photo     ║
-  ║  Replace the src URL below with your actual image path      ║
-  ╚══════════════════════════════════════════════════════════════╝
--->
-<img src="https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2022.jpeg"
-     alt="Project AeroMed Banner" width="65%"/>
+# 🧬 PROJECT HELIX
 
-<br/><br/>
+### Autonomous eDNA Soil-Sampling & On-Board Species Detection Drone
 
-# 🚁 Project AeroMed
-### Autonomous Biomedical Delivery Drone
-
-*Bridging computer vision, aerospace engineering, and biomedical science*
-*to deliver life-saving supplies where it matters most.*
+*Fly to a site. Drill a soil core. Extract the DNA. Sequence it in the field.*
+*Know what lives there — before you've walked back to the van.*
 
 <br/>
 
-![Status](https://img.shields.io/badge/Status-Active%20Development-brightgreen?style=for-the-badge&logo=githubactions&logoColor=white)
-![Team](https://img.shields.io/badge/Team-5%20Engineers-blueviolet?style=for-the-badge&logoColor=white)
-![Phase](https://img.shields.io/badge/Current%20Phase-1%20%E2%80%93%20Learning%20%26%20Simulation-orange?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Active%20Development-2ea44f?style=for-the-badge)
+![Phase](https://img.shields.io/badge/Phase%201-Learning%20%26%20Simulation-1f6f3f?style=for-the-badge)
+![Team](https://img.shields.io/badge/Team-5%20Engineers-4c1?style=for-the-badge)
+![Timeline](https://img.shields.io/badge/Timeline-9%E2%80%9312%20Months-556b2f?style=for-the-badge)
 
 <br/>
 
@@ -31,62 +20,68 @@
 ![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?style=for-the-badge&logo=opencv&logoColor=white)
 ![ArduPilot](https://img.shields.io/badge/ArduPilot-FF0000?style=for-the-badge&logo=arduino&logoColor=white)
 ![RaspberryPi](https://img.shields.io/badge/Raspberry%20Pi-A22846?style=for-the-badge&logo=raspberrypi&logoColor=white)
+![Nanopore](https://img.shields.io/badge/Oxford%20Nanopore-0084A9?style=for-the-badge)
+![Biopython](https://img.shields.io/badge/Biopython-3776AB?style=for-the-badge&logo=biopython&logoColor=white)
 ![Fusion360](https://img.shields.io/badge/Fusion%20360-F05A28?style=for-the-badge&logo=autodesk&logoColor=white)
-![KiCad](https://img.shields.io/badge/KiCad-314CB0?style=for-the-badge&logoColor=white)
+![KiCad](https://img.shields.io/badge/KiCad-314CB0?style=for-the-badge)
 
 </div>
 
+> [!IMPORTANT]
+> **Project pivot — July 2026.** HELIX began as an autonomous *medical delivery* drone. It is now an **environmental DNA (eDNA) sampling and species-detection platform**. The airframe, flight controller, onboard computer, and thermal system carry over. The payload bay, detection stack, and scientific mission are new. YOLO has been removed from the vision stack — landing and terrain vision is **OpenCV only**.
+
 ---
 
-## 📖 Table of Contents
+## 📖 Contents
 
-- [Mission Statement](#-mission-statement)
-- [What We're Delivering](#-what-were-delivering)
-- [Engineering Pillars](#-engineering-pillars)
+- [The Idea](#-the-idea)
+- [How a Mission Works](#-how-a-mission-works)
+- [Engineering Pillars](#️-engineering-pillars)
 - [The Team](#-the-team)
-- [Technology Stack](#-technology-stack)
-- [Roadmap](#-roadmap--timeline)
+- [Technology Stack](#️-technology-stack)
+- [Roadmap](#-roadmap)
+- [Honest Risks](#️-honest-risks)
 - [Repository Structure](#-repository-structure)
 - [Getting Started](#-getting-started)
 
 ---
 
-## 🎯 Mission Statement
+## 🎯 The Idea
 
-> **"Time is the enemy in a medical emergency. Distance should not be."**
+> ### *"Fieldwork should not take weeks. Presence should be provable in minutes."*
 
-Project AeroMed is a full-scope engineering project built by five post-A-Level STEM students. We are designing, simulating, and physically constructing an **autonomous hexacopter** capable of navigating via GPS and computer vision to deliver temperature-sensitive, life-critical medical payloads to locations traditional logistics cannot reach in time.
+Every living thing sheds DNA into the soil around it — skin, hair, roots, spores, waste. That trace is called **environmental DNA (eDNA)**, and it is a fingerprint of everything that has recently lived in a place.
 
-<!--
-  ╔══════════════════════════════════════════════════════════════╗
-  ║  CONCEPT IMAGE — goes here, directly under mission statement ║
-  ║  Suggested: your initial concept sketch, mood board,        ║
-  ║  or first Fusion 360 render                                 ║
-  ║  Recommended size: 900 × 500px                              ║
-  ║  Upload to: Media/Renders/ or Media/Sketches/               ║
-  ╚══════════════════════════════════════════════════════════════╝
--->
-<div align="center">
-  <img src="YOUR_CONCEPT_SKETCH_OR_RENDER_URL_HERE" alt="AeroMed Concept Sketch or CAD Render" width="70%"/>
-  <br/>
-  <sub><i>Initial concept sketch / early CAD render — replace this URL with your image path</i></sub>
-</div>
+Today, answering *"is this species here?"* means a person walking to a site, taking a soil sample, driving it to a lab, and waiting days or weeks for a sequencing result.
+
+**Project HELIX collapses that loop into a single flight.** An autonomous hexacopter navigates to a target coordinate, drills a soil core, lyses the sample to release its DNA, feeds it into an on-board nanopore sequencer, matches the reads against a reference database, and reports whether the target species is present — **without the sample ever leaving the field.**
+
+Built by five post-A-Level students as a full-scope engineering project, spanning flight dynamics to wet-lab chemistry.
 
 ---
 
-## 💊 What We're Delivering
+## 🔄 How a Mission Works
 
-The payload bay is engineered to safely transport critical emergency medications. Each medicine has strict handling requirements — selecting a payload automatically reconfigures the bay's thermal environment to the correct conditions.
+```mermaid
+flowchart LR
+    A["🛰️ 1 · NAVIGATE<br/>GPS waypoint<br/>ArduPilot + DroneKit"]
+    B["👁️ 2 · LAND<br/>OpenCV terrain check<br/>LiDAR + ArUco"]
+    C["🔩 3 · DRILL<br/>Servo auger<br/>one soil core"]
+    D["🧪 4 · EXTRACT<br/>Lysis chamber<br/>DNA released"]
+    E["🧬 5 · SEQUENCE<br/>MinION nanopore<br/>real-time reads"]
+    F["📊 6 · REPORT<br/>Kraken2 / BLAST<br/>present or absent"]
 
-| Medication | Use Case | Temperature | Key Handling Requirement |
-|:---:|:---|:---:|:---|
-| 💉 **EpiPen / Adrenaline** | Anaphylactic shock | 15–25°C | Impact-sensitive; do not freeze |
-| 🩹 **Naloxone** | Opioid overdose reversal | 15–25°C | Speed of delivery critical |
-| 🐍 **Anti-Venom** | Venomous bites & stings | 2–8°C | Refrigerated; vibration-sensitive |
-| 🩺 **Oxytocin** | Postpartum haemorrhage | 2–8°C | Cold chain essential; light-sensitive |
-| 🩸 **Tranexamic Acid (TXA)** | Trauma bleeding control | 15–25°C | Highly stable; time-critical use |
+    A --> B --> C --> D --> E --> F
 
-> Cold chain medicines (Anti-Venom, Oxytocin) use active Peltier cooling. Room-temperature medicines use insulation and continuous monitoring. Payload selection triggers an interrupt-driven thermal state machine on the Raspberry Pi.
+    style A fill:#1f6f3f,stroke:#0d3d21,color:#ffffff
+    style B fill:#2a7d4a,stroke:#0d3d21,color:#ffffff
+    style C fill:#3a8b55,stroke:#0d3d21,color:#ffffff
+    style D fill:#4a9960,stroke:#0d3d21,color:#ffffff
+    style E fill:#5aa76b,stroke:#0d3d21,color:#ffffff
+    style F fill:#6ab576,stroke:#0d3d21,color:#ffffff
+```
+
+**The sample is held at ~4 °C** by a Peltier thermoelectric cooler from the moment it is drilled — eDNA degrades quickly once it leaves the ground. One soil core per flight, one pre-loaded target species per mission, and a **presence / absence** answer at the end.
 
 ---
 
@@ -96,36 +91,37 @@ The payload bay is engineered to safely transport critical emergency medications
 <tr>
 <td width="50%" valign="top">
 
-### 📐 6-DoF Kinematics & Mathematics
-Transforming localised camera coordinate frames into global navigation waypoints using rotation matrices, quaternions, and rigid body dynamics.
+### 🛩️ Flight & Autonomy
+GPS waypoint navigation and autonomous landing on unprepared terrain. Vision is used to *verify the ground is safe to land on* — not to identify objects.
 
-**Topics:** Euler angles · Quaternions · Newton-Euler equations · NED frames
+**Stack:** ArduPilot · DroneKit · MAVLink · SITL <br/>
+**Vision:** OpenCV · ArUco · LiDAR *(no YOLO)*
 
 </td>
 <td width="50%" valign="top">
 
-### 👁️ Computer Vision
-OpenCV and YOLO-based real-time target detection for precision landing zone identification and autonomous target acquisition during flight.
+### 🔩 Soil Probe & Mechanism
+A servo-driven auger that penetrates soil, captures a clean core, and retracts — while a multi-kilogram aircraft stays stable on uneven ground.
 
-**Tools:** OpenCV · YOLO · ArUco markers · CNNs
+**Topics:** Servo control · Soil mechanics · Fusion 360 CAD · Vibration isolation
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-### 🧬 Biomedical Payload Engineering
-Designing an insulated, vibration-dampened payload bay that maintains strict thermal conditions (2–8°C cold chain where required) with real-time monitoring throughout transit.
+### 🧪 Wet-Lab & eDNA Chemistry
+The hardest problem in the project. Lysing soil to release DNA, isolating it from inhibitors, and doing it **inside a flying machine** with no technician present.
 
-**Topics:** Peltier modules · Thermodynamic isolation · Vibration dampening · KiCad PCB
+**Topics:** Lysis chemistry · Contamination control · Cold chain · Reagent cartridges
 
 </td>
 <td width="50%" valign="top">
 
-### 🔌 Systems Integration
-Merging hardware flight controllers (Cube Orange+) with onboard edge computing (Raspberry Pi 5) via MAVLink for real-time autonomous decision making and safe failsafes.
+### 🧬 Sequencing & Bioinformatics
+Turning raw nanopore signal into a species call: basecalling, quality filtering, and matching reads against a curated reference database.
 
-**Tools:** MAVLink · ArduPilot · DroneKit-Python · SITL
+**Stack:** MinION · MinKNOW · EPI2ME · Biopython · Kraken2 / BLAST+
 
 </td>
 </tr>
@@ -135,186 +131,125 @@ Merging hardware flight controllers (Cube Orange+) with onboard edge computing (
 
 ## 👥 The Team
 
-<!--
-  ╔══════════════════════════════════════════════════════════════╗
-  ║  TEAM PHOTO — goes here, above the team table               ║
-  ║  Even a casual group photo works well                       ║
-  ║  Recommended size: 900 × 400px                              ║
-  ║  Upload to: Media/Photos/                                   ║
-  ╚══════════════════════════════════════════════════════════════╝
--->
-<div align="center">
-  <img src="YOUR_TEAM_PHOTO_URL_HERE" alt="The AeroMed Team" width="70%"/>
-  <br/>
-  <sub><i>The AeroMed team — replace this URL with your team photo path</i></sub>
-</div>
-
-<br/>
-
-| Member | Role | Primary Responsibilities |
+| Member | Role | Owns |
 |:---|:---|:---|
-| **Matthews** | Project Lead & Systems Engineer | Project management, SITL simulation, kinematics modelling, DroneKit mission scripting |
-| **Jean-Paul** | Lead Programmer & CV Specialist | Computer vision (OpenCV, YOLO, CNNs), ArduPilot/MAVLink integration, autonomous targeting |
-| **Malick** | Maths & Hardware Lead | Coordinate frame transforms, 6-DoF dynamics, Fusion 360 CAD, power distribution |
-| **David** | Biochem & Payload Engineer | Thermodynamic isolation, cold chain compliance, payload bay design, KiCad PCB |
-| **Mustafa** | Biochem & Payload Engineer | Protein/enzyme degradation research, vibration impact analysis, payload bay testing, regulations |
+| **Matthews** | Project Lead · Systems & Kinematics | Project management, weekly missions, SITL simulation, kinematics modelling, DroneKit scripting |
+| **Jean-Paul** | Lead Programmer · CV & Bioinformatics | Landing/terrain CV (OpenCV), ArduPilot/MAVLink, MinKNOW & EPI2ME pipeline, Kraken2/BLAST species matching |
+| **Malick** | Maths & Hardware Lead | Coordinate transforms, 6-DoF dynamics, CAD chassis + soil-probe mechanism, power distribution |
+| **David** | Wet-Lab & Payload Engineer | On-board DNA extraction chemistry, lysis chamber design, eDNA cold chain, contamination control |
+| **Mustafa** | Wet-Lab & Payload Engineer | Reference species database curation, extraction protocol testing, chamber vibration testing, regulations |
+
+> **How we work:** the team commits 2–4 hrs/week. Each week ships as a **mission** — a goal, the tool for the job, a how-to, and the concept behind it. Learn by doing. Progress is tracked in `progress.md` and on GitHub.
 
 ---
 
 ## 🛠️ Technology Stack
-┌─────────────────────────────────────────────────────────────────┐
-
-│                       SOFTWARE LAYER                            │
-
-│   Python 3.x  ·  OpenCV  ·  DroneKit  ·  MAVLink  ·  YOLO     │
-
-├─────────────────────────────────────────────────────────────────┤
-
-│                     SIMULATION LAYER                            │
-
-│          ArduPilot SITL          ·        Fusion 360 CAD        │
-
-├─────────────────────────────────────────────────────────────────┤
-
-│                      HARDWARE LAYER                             │
-
-│   Raspberry Pi 5  ·  Cube Orange+  ·  6× T-Motor  ·  BLHeli32 │
-
-│     Here3 GPS  ·  TF-Luna LiDAR  ·  Peltier TEC  ·  Custom PCB │
-
-└─────────────────────────────────────────────────────────────────┘
 
 | Tool | Purpose |
 |:---|:---|
-| Python 3.x | All flight logic, computer vision, and thermal control |
-| ArduPilot / ArduCopter | Firmware for low-level flight stabilisation, failsafes, GPS navigation |
-| ArduPilot SITL | Software-in-the-Loop simulator — fly a virtual drone with no hardware |
-| DroneKit-Python | Autonomous mission scripting via MAVLink |
-| OpenCV + YOLO | Real-time object detection, ArUco marker tracking, precision landing |
-| Fusion 360 | CAD for frame, payload bay, mounts — exports STL for 3D printing |
-| KiCad | PCB design for thermal control circuit — exports Gerber for JLCPCB |
-| Raspberry Pi 5 (8GB) | Onboard computer running all Python code |
-| Cube Orange+ | Flight controller with redundant IMUs and reliable GPS |
+| **Python 3.x** | Flight logic, probe/chamber actuation, bioinformatics scripting |
+| **ArduPilot / ArduCopter** | Low-level flight stabilisation, failsafes, GPS navigation |
+| **ArduPilot SITL** | Software-in-the-loop simulator — fly a virtual drone, no hardware needed |
+| **DroneKit-Python + MAVLink** | Autonomous mission scripting; Pi ↔ flight-controller comms |
+| **OpenCV** | Terrain assessment and precision-landing vision — **classical CV only** |
+| **Oxford Nanopore MinION** | USB DNA sequencer — the heart of the science payload |
+| **MinKNOW / EPI2ME** | Nanopore data acquisition and basecalling |
+| **Biopython · Kraken2 / BLAST+** | Read processing and species matching against the reference database |
+| **Fusion 360 · KiCad** | Chassis, soil probe & lysis chamber CAD; thermal-control PCB |
+| **Cube Orange+ · Raspberry Pi 5** | Flight controller (redundant IMUs) and onboard flight computer |
+
+> [!NOTE]
+> **The Pi 5 does not do the sequencing.** It runs OpenCV, DroneKit, and the actuators. Nanopore basecalling is far too heavy for it — a **companion laptop or Jetson** runs MinKNOW. This split is a deliberate design decision, not an oversight.
+
+### 🎮 Parallel Visualisation Track
+
+An **Unreal Engine + C++ (AirSim-based)** farmland simulation with probe animation and DNA-marker trigger zones, bridged over WebSocket to an HTML/JS dashboard showing live telemetry, chamber temperature, injected physical faults, and sample reports. This is a **separate skillset** from the Python flight stack — *needs an owner assigned before it starts.*
 
 ---
 
-## 📅 Roadmap & Timeline
-     Jul 2026           Nov 2026            Mar 2027        Jun 2027
-        │                  │                   │               │
-────────────┼──────────────────┼───────────────────┼───────────────┼────
+## 📅 Roadmap
 
-│                  │                   │               │
+```mermaid
+gantt
+    title Project HELIX — 9 to 12 Month Plan
+    dateFormat YYYY-MM-DD
+    axisFormat %b %y
 
-┌─────────────────────────────────────┐           │               │
+    section Phase 1+2 Learn and Simulate
+    SITL autonomy and OpenCV landing    :active, a1, 2026-07-01, 2026-11-15
+    Extraction chemistry research       :active, a2, 2026-07-01, 2026-11-15
+    MinKNOW on public datasets          :active, a3, 2026-08-01, 2026-11-15
+    CAD chassis probe and chamber       :a4, 2026-08-01, 2026-11-15
 
-│   PHASE 1 · Learning & Simulation   │           │               │
+    section Procurement
+    Order hardware and funding talks    :crit, b1, 2026-10-15, 2026-11-30
 
-│  SITL · OpenCV · CAD · Thermal spec │           │               │
+    section Phase 3 Build and Test
+    Assembly PID tuning bench tests     :c1, 2026-12-01, 2027-02-15
+    Probe and chamber integration       :c2, 2027-01-01, 2027-03-15
+    First autonomous sampling flights   :c3, 2027-02-15, 2027-04-15
 
-└─────────────────────────────────────┘           │               │
+    section Polish
+    Data results and documentation      :d1, 2027-04-01, 2027-06-15
+```
 
-│                   │               │
+**Phase 1+2 is simulation-first** — SITL, Gazebo/AirSim, extraction-chemistry literature, and running MinKNOW/EPI2ME against *public* nanopore datasets. No hardware is needed to start, so nobody is blocked waiting on parts.
 
-┌──────────────────────────────────────────────┤
+---
 
-│     PHASE 2 · Hardware & Build               │
+## ⚠️ Honest Risks
 
-│  Assembly · PID tuning · CV integration ·    │
+This project is ambitious, and we would rather name the hard problems than pretend they are solved.
 
-│  Payload testing · Autonomous flight         │
-
-└──────────────────────────────────────────────┘
-
-### 🖥️ Phase 1 — Learning & Simulation *(July – October/November 2026)*
-
-The summer window is the highest-productivity period. Learning and building in simulation happen simultaneously — topics the build never requires are skipped.
-
-- Environment setup: Python, VS Code, Git, ArduPilot SITL, Fusion 360
-- SITL autonomous mission scripting with DroneKit
-- OpenCV target detection tested on webcam feeds
-- Fusion 360 hexacopter frame and payload bay CAD design
-- Breadboard Peltier thermal circuit with DS18B20 / BME280 sensors
-- Payload biochemistry research and thermal specification per medicine
-- Custom PCB designed in KiCad, ordered from JLCPCB
-
-### 🔧 Phase 2 — Hardware & Build *(December 2026 – June 2027)*
-
-- Hardware procurement (Cube Orange+, T-Motors, ESCs, Pi 5, LiPo batteries, LiDAR, Peltier modules)
-- Frame assembly and Cube Orange+ configuration via Mission Planner
-- Bench testing all electronics and payload bay thermal regulation
-- First flights, PID tuning, autonomous mission testing
-- Computer vision integration and precision landing trials
-- Flight data logs, quantitative results, and full documentation
-
-<!--
-  ╔══════════════════════════════════════════════════════════════╗
-  ║  GANTT CHART IMAGE (optional) — goes here                   ║
-  ║  Export your timeline / Gantt from Notion, Excel, or        ║
-  ║  draw.io as a PNG and drop the link in below                ║
-  ║  Upload to: Media/Diagrams/                                 ║
-  ╚══════════════════════════════════════════════════════════════╝
--->
+| Risk | Reality |
+|:---|:---|
+| 💰 **MinION cost** | **£800 – £4,500+** for the sequencer alone — this *exceeds the entire original £1,000 budget*. Total project estimate is now **£2,140 – £6,700+**. This needs a funding / sponsorship / university-partnership conversation **before Phase 3.** |
+| 🧪 **Extraction chemistry** | The **hardest engineering problem in the project.** Reliable soil lysis and DNA isolation inside a vibrating aircraft, with no technician present, is genuinely unsolved for us. Highest technical risk. |
+| ⚖️ **On-board vs. lab** | Sequencing on-board gives a live field result but carries far more risk than flying the sample back to a lab. We chose the harder path deliberately — and it may have to fall back. |
+| 🔬 **Contamination** | A single stray skin cell can produce a false positive. Contamination control is a first-class design constraint, not an afterthought. |
 
 ---
 
 ## 📁 Repository Structure
-AeroMed/
 
+```
+PROJECT-HELIX/
 │
-
-├── 📂 01_learning_and_simulation/         # Phase 1 — all simulation and research
-
-│   ├── 📂 biochemistry/                  # Thermal & vibration stability research
-
-│   ├── 📂 maths_and_kinematics/          # 6-DoF modelling & matrix derivations
-
-│   ├── 📂 coding_and_cv/                 # Python scripts & OpenCV experiments
-
-│   ├── 📂 cad_designs/                   # Fusion 360 files (.F3D, .STL, .STEP)
-
-│   ├── 📂 pcb_design/                    # KiCad schematics & Gerber exports
-
-│   └── 📂 flight_simulations/            # SITL profiles & autonomous mission scripts
-
+├── 01_learning_and_simulation/     # Phase 1 — simulation & research
+│   ├── biochemistry/               # eDNA extraction chemistry, lysis, cold chain
+│   ├── coding_and_cv/              # OpenCV landing vision + bioinformatics scripts
+│   ├── maths_and_kinematics/       # 6-DoF modelling, coordinate transforms
+│   ├── cad_designs/                # Fusion 360 — chassis, soil probe, chamber
+│   ├── pcb_design/                 # KiCad schematics & Gerber exports
+│   └── flight_simulations/         # SITL profiles & autonomous mission scripts
 │
-
-├── 📂 02_hardware_and_build/              # Phase 2 — physical hardware
-
-│   ├── 📂 flight_controller/             # Cube Orange+ params & firmware configs
-
-│   ├── 📂 payload_bay/                   # Thermal test data & Peltier control code
-
-│   └── 📂 telemetry_logs/               # Real flight data for performance analysis
-
+├── 02_hardware_and_build/          # Phase 3 — physical hardware
+│   ├── flight_controller/          # Cube Orange+ params & firmware configs
+│   ├── payload_bay/                # Soil probe, lysis chamber, thermal control
+│   └── telemetry_logs/             # Real flight data for performance analysis
 │
-
-└── 📂 Media/                             # All photos, renders, and diagrams
-
-├── 📂 Photos/                        # Team photos, build progress shots
-
-├── 📂 Renders/                       # Fusion 360 CAD renders
-
-├── 📂 Sketches/                      # Concept sketches
-
-└── 📂 Diagrams/                      # System diagrams, Gantt charts
+├── docs/                           # Design specs & research notes
+└── Media/                          # Renders, sketches, diagrams, photos
+```
 
 ---
 
 ## 🚀 Getting Started
 
-> ⚠️ *Full setup instructions will be added as the project advances through Phase 2.*
+Phase 1 runs entirely in simulation — **no drone hardware required.**
 
-**Prerequisites:**
 ```bash
 # Clone the repository
 git clone https://github.com/MatthewsDS/Medical-drone-delivery-Project-.git
 cd Medical-drone-delivery-Project-
 
-# Install Python dependencies
+# Core flight + vision dependencies
 pip install opencv-python dronekit pymavlink numpy geopy folium
+
+# Bioinformatics dependencies
+pip install biopython
 ```
 
-**Running an ArduPilot SITL simulation (Phase 1):**
 ```bash
 # Launch the SITL virtual drone
 sim_vehicle.py -v ArduCopter --console --map
@@ -323,29 +258,25 @@ sim_vehicle.py -v ArduCopter --console --map
 python 01_learning_and_simulation/flight_simulations/autonomous_mission.py
 ```
 
+> [!TIP]
+> **New to the team? Start here.** You don't need to understand the whole system to contribute. Pick up this week's mission — the concept behind it gets explained alongside the task.
+
 ---
 
-<!--
-  ╔══════════════════════════════════════════════════════════════╗
-  ║  FOOTER / LOGO IMAGE — goes here at the very bottom         ║
-  ║  Your AeroMed logo, school badge, or a clean project icon   ║
-  ║  Recommended: square image, displayed at 100–130px wide     ║
-  ╚══════════════════════════════════════════════════════════════╝
--->
 <div align="center">
-
-<img src="https://github.com/MatthewsDS/Medical-drone-delivery-Project-/blob/main/Media/Photos/IMG_2023.jpeg"
-     alt="AeroMed Logo" width="120px"/>
-
-<br/><br/>
-
-**Project AeroMed** · Post-A-Level STEM Engineering Project
-*Built with purpose. Engineered for impact.*
 
 <br/>
 
-![GitHub last commit](https://img.shields.io/github/last-commit/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=brightgreen)
-![GitHub repo size](https://img.shields.io/github/repo-size/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=blue)
-![GitHub stars](https://img.shields.io/github/stars/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=yellow)
+### 🧬 PROJECT HELIX
+
+**Autonomous eDNA Sampling & Species Detection**
+
+*Post-A-Level STEM engineering project · 2026 – 2027*
+
+<br/>
+
+![Last commit](https://img.shields.io/github/last-commit/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=2ea44f)
+![Repo size](https://img.shields.io/github/repo-size/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=1f6f3f)
+![Stars](https://img.shields.io/github/stars/MatthewsDS/Medical-drone-delivery-Project-?style=flat-square&color=556b2f)
 
 </div>
