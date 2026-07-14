@@ -160,15 +160,6 @@ venv.bak/
 # Claude Code personal permission allowlist (per-machine, not shared)
 .claude/settings.local.json
 
-# YOLO model weights (auto-download, don't commit)
-*.pt
-
-# lighting.py test recordings
-01_learning_and_simulation/coding_and_cv/clip.mp4
-
-# hub.py runtime scratch output
-01_learning_and_simulation/coding_and_cv/.hub_last_output.txt
-
 # macOS
 .DS_Store
 
